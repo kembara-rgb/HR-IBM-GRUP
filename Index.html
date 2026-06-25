@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR IBM GRUP — Aplikasi</title>
+<style>
+:root{--navy:#1F3864;--navy2:#16294a;--blue:#2E75B6;--ink:#1f2430;--muted:#6b7280;--line:#e1e5ec;--bg:#eef1f6;
+--green:#1d9e75;--amber:#ba7517;--orange:#c55a11;--red:#c0392b;--teal:#0f6e56;}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
+.app{display:flex;min-height:100vh}
+/* sidebar */
+.side{width:230px;background:var(--navy);color:#cdd8ea;flex-shrink:0;display:flex;flex-direction:column}
+.side .brand{padding:16px 18px;border-bottom:1px solid #2b4470}
+.side .brand b{color:#fff;font-size:16px;letter-spacing:.5px}
+.side .brand span{display:block;font-size:11px;color:#8aa0c6;margin-top:2px}
+.side .grp{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#7e93ba;padding:14px 18px 4px}
+.side a{display:flex;align-items:center;gap:9px;padding:8px 18px;color:#cdd8ea;text-decoration:none;font-size:13px;cursor:pointer;border-left:3px solid transparent}
+.side a:hover{background:#26406d;color:#fff}
+.side a.active{background:#26406d;color:#fff;border-left-color:#5DCAA5}
+.side a .ic{width:18px;text-align:center;font-size:14px}
+.side a .st{margin-left:auto;font-size:9px;padding:1px 6px;border-radius:8px}
+.st-aktif{background:#1d9e75;color:#fff}.st-segera{background:#ba7517;color:#fff}.st-rencana{background:#3a527e;color:#cdd8ea}
+.side .foot{margin-top:auto;padding:12px 18px;font-size:10px;color:#7e93ba;border-top:1px solid #2b4470}
+/* main */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;display:flex;align-items:center;gap:14px}
+.top h1{font-size:17px;margin:0;color:var(--navy)}
+.top .spacer{flex:1}
+.top .period{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.top select,.top input{font-family:inherit;font-size:13px;padding:4px 6px;border-radius:6px;border:1px solid #cfd6e2}
+.content{padding:20px 22px 60px}
+.view{display:none}.view.show{display:block}
+/* dashboard */
+.hello{font-size:20px;font-weight:bold;color:var(--navy);margin:0 0 2px}
+.hello+.p{color:var(--muted);margin:0 0 16px;font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px 16px}
+.card .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.card .val{font-size:24px;font-weight:bold;margin-top:3px;color:var(--navy)}
+.card .val small{font-size:12px;font-weight:normal;color:var(--muted)}
+.sec-title{font-size:13px;font-weight:bold;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 16px;cursor:pointer;transition:.12s;position:relative}
+.tile:hover{border-color:var(--blue);transform:translateY(-1px);box-shadow:0 4px 14px rgba(31,56,100,.08)}
+.tile.lock{cursor:default;opacity:.92}
+.tile .ic{font-size:22px}
+.tile h3{margin:8px 0 3px;font-size:14px;color:var(--ink)}
+.tile p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
+.tile .badge{position:absolute;top:12px;right:12px;font-size:9px;padding:2px 7px;border-radius:8px;font-weight:bold}
+.b-aktif{background:#e2efe9;color:#0f6e56}.b-segera{background:#f7ecd6;color:#8a5a00}.b-rencana{background:#eef1f6;color:#6b7280}
+/* toolbar + table (KPI) */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+button{font-family:inherit;font-size:13px;padding:8px 12px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button:hover{background:#eef2f8}
+button.primary{background:var(--navy);color:#fff;border-color:var(--navy)}button.primary:hover{background:var(--navy2)}
+.tablewrap{overflow-x:auto;background:#fff;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:1180px;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
+th{background:var(--navy);color:#fff;font-size:11px;position:sticky;top:0;z-index:2}th.grp{background:var(--navy2)}
+td.name{text-align:left}td input,td select{font-family:inherit;font-size:13px;width:60px;padding:4px;border:1px solid #cfd6e2;border-radius:5px;text-align:center;background:#eaf1fb}
+td input.name{width:88px;text-align:left;background:#fff;font-weight:bold}td input.wide{width:78px}
+td.out{font-weight:bold;background:#eef5ee}
+.badge2{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:bold;color:#fff}
+.gA{background:var(--green)}.gB{background:var(--teal)}.gC{background:var(--amber)}.gD{background:var(--orange)}.gE{background:var(--red)}
+.ins{font-weight:bold;color:var(--navy)}.del{color:var(--red);cursor:pointer;border:none;background:none;font-size:15px}.seg{font-size:11px;color:var(--muted)}
+tbody tr:nth-child(even){background:#f7f9fc}
+.note{background:#fff8e6;border:1px solid #f0d98a;border-radius:9px;padding:10px 14px;font-size:12.5px;color:#6b5400;margin:14px 0}
+details{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin:12px 0;font-size:13px}
+summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
+/* placeholder */
+.ph{background:#fff;border:1px dashed #c3ccda;border-radius:12px;padding:30px;text-align:center;max-width:640px}
+.ph .ic{font-size:40px}.ph h2{color:var(--navy);margin:10px 0 6px}.ph p{color:var(--muted);max-width:480px;margin:6px auto}
+.ph .will{text-align:left;display:inline-block;margin:14px auto 0;color:#444;font-size:13px;line-height:1.7}
+@media(max-width:760px){.side{width:60px}.side .brand span,.side a span.tx,.side .grp,.side .foot,.side a .st{display:none}.side a{justify-content:center;padding:10px 0}}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="side">
+    <div class="brand"><b>HR IBM GRUP</b><span>PT Inti Bharu Mas</span></div>
+    <div id="nav"></div>
+    <div class="foot">v1.1 · Modul aktif: 3/12<br>Pilot Juli 2026</div>
+  </nav>
+  <div class="main">
+    <div class="top">
+      <h1 id="viewTitle">Dashboard</h1>
+      <div class="spacer"></div>
+      <div class="period" id="periodBox" style="display:none">
+        <span>Periode</span><select id="month"></select><select id="year"></select>
+      </div>
+    </div>
+    <div class="content">
+      <!-- DASHBOARD -->
+      <div class="view show" id="view-dashboard">
+        <p class="hello">Selamat datang, Pak Tjen 👋</p>
+        <p class="p">Ringkasan sistem HR IBM Group. Klik modul mana pun di bawah untuk membukanya.</p>
+        <div class="cards" id="dashCards"></div>
+        <div class="sec-title">Modul Utama (aktif)</div>
+        <div class="tiles" id="tilesAktif"></div>
+        <div class="sec-title">Akan Dibangun Berikutnya</div>
+        <div class="tiles" id="tilesSegera"></div>
+        <div class="sec-title">Direncanakan</div>
+        <div class="tiles" id="tilesRencana"></div>
+      </div>
+      <!-- KPI -->
+      <div class="view" id="view-kpi">
+        <div class="toolbar">
+          <button class="primary" onclick="addRow()">+ Tambah Karyawan</button>
+          <button onclick="loadSeed()">Muat Contoh (Mei 2026)</button>
+          <button onclick="saveData()">💾 Simpan</button>
+          <button onclick="exportCSV()">⬇ Ekspor CSV</button>
+          <button onclick="window.print()">🖨 Cetak</button>
+          <button onclick="clearData()">Kosongkan</button>
+        </div>
+        <div class="cards" id="kpiCards"></div>
+        <div class="tablewrap">
+          <table><thead>
+            <tr><th rowspan="2">NIK</th><th rowspan="2">Nama</th><th rowspan="2">Divisi</th><th rowspan="2">Tipe</th><th rowspan="2">SPV</th><th rowspan="2">Pagu</th>
+            <th class="grp" colspan="5">KPI Positif (%)</th><th class="grp" colspan="3">Penalti</th>
+            <th rowspan="2">Point</th><th rowspan="2">Pen.</th><th rowspan="2">Net</th><th rowspan="2">Grade</th><th rowspan="2">Insentif</th><th rowspan="2">Segmen</th><th rowspan="2"></th></tr>
+            <tr><th>Sales</th><th>OA</th><th>NOO</th><th>SKU</th><th>NPD</th><th>Piut.</th><th>Retur</th><th>Telat</th></tr>
+          </thead><tbody id="tbody"></tbody></table>
+        </div>
+        <details><summary>Aturan perhitungan (transparan & dapat dikalibrasi)</summary>
+          <ul>
+            <li>Bobot GT/Mix: Sales 30, OA 20, NOO 25, SKU 10, NPD 15. MT: Sales 70, SKU 30.</li>
+            <li>Penalti: Piutang 0/10/20/30/40 ×30%; Retur ≥1,2→100 / 1–1,2→50 ×20%; Telat 1/2/≥3 →50/80/100 ×10%.</li>
+            <li>Nilai Bersih (Indeks) = Point − Penalti. Insentif = Pagu × Net%. Grade A≥90 … E&lt;60.</li>
+            <li style="color:#a32d2d">Memakai skema berjalan (pagu × net%), tervalidasi 11/11 ke slip Mei 2026.</li>
+          </ul>
+        </details>
+      </div>
+      <!-- PAYROLL -->
+      <div class="view" id="view-payroll">
+        <div class="toolbar">
+          <button class="primary" onclick="payAdd()">+ Tambah Karyawan</button>
+          <button onclick="payPull()">↪ Tarik Insentif KPI periode ini</button>
+          <button onclick="paySave()">💾 Simpan</button>
+          <button onclick="payCSV()">⬇ Ekspor CSV</button>
+        </div>
+        <div class="cards" id="payCards"></div>
+        <div class="tablewrap">
+          <table><thead>
+            <tr><th rowspan="2">NIK</th><th rowspan="2">Nama</th>
+              <th class="grp" colspan="6">Pendapatan (Rp)</th><th rowspan="2">Gaji Kotor</th>
+              <th class="grp" colspan="4">Potongan (Rp)</th><th rowspan="2">Gaji Bersih</th><th rowspan="2">Slip</th><th rowspan="2"></th></tr>
+            <tr><th>Pokok</th><th>Transport</th><th>Makan</th><th>Jabatan</th><th>Lembur</th><th>Insentif KPI</th>
+              <th>JHT 2%</th><th>Kes 1%</th><th>JP 1%</th><th>PPh21</th></tr>
+          </thead><tbody id="payBody"></tbody></table>
+        </div>
+        <details><summary>Aturan payroll (sesuai PP 36/2021 & BPJS)</summary>
+          <ul>
+            <li>Gaji Kotor = Pokok + Transport + Makan + Jabatan + Lembur + Insentif KPI.</li>
+            <li>Potongan BPJS karyawan: JHT 2%, Jaminan Pensiun 1%, Kesehatan 1% — basis = Pokok + Tunjangan Jabatan (Kesehatan dibatasi basis Rp 12.000.000).</li>
+            <li>PPh21 diisi manual untuk sementara (metode TER 2024 menyusul). Tapera 2,5% belum diaktifkan (berlaku 2027).</li>
+            <li>Gaji Bersih = Gaji Kotor − (Total BPJS + PPh21). Insentif KPI ditarik otomatis dari modul KPI periode yang sama.</li>
+          </ul>
+        </details>
+      </div>
+      <!-- PLACEHOLDER -->
+      <div class="view" id="view-ph"><div class="ph" id="phInner"></div></div>
+    </div>
+  </div>
+</div>
+<script>
+/* ---------- MODULES ---------- */
+const MODULES=[
+ {id:"dashboard",name:"Dashboard",ic:"📊",status:"aktif",grp:"utama",desc:"Ringkasan & navigasi seluruh modul."},
+ {id:"kpi",name:"KPI & Insentif",ic:"🎯",status:"aktif",grp:"utama",desc:"Hitung skor KPI & insentif otomatis per bulan."},
+ {id:"master",name:"Master Data Karyawan",ic:"👤",status:"segera",grp:"data",desc:"Profil, NIK, jabatan, divisi, BPJS, rekening, keluarga.",will:["Data lengkap tiap karyawan","Cek anti-fraud (rekening & NIK)","Dasar semua modul lain"]},
+ {id:"selfservice",name:"Self-Service Karyawan",ic:"📱",status:"segera",grp:"data",desc:"Karyawan isi data sendiri via HP, HRD validasi.",will:["Form pengisian di HP","Validasi & approval HRD","Data terkunci di master"]},
+ {id:"karir",name:"Jenjang Karir & Talenta",ic:"🪜",status:"segera",grp:"data",desc:"Tangga karir & matriks talenta 9-box.",will:["Jalur Salesman→Direktur","9-box performa × potensi","Rekomendasi orbit/saring"]},
+ {id:"struktur",name:"Struktur Organisasi",ic:"🏢",status:"rencana",grp:"ops",desc:"Bagan organisasi per entitas.",will:["Org chart dinamis","Atasan–bawahan","Per entitas/divisi"]},
+ {id:"absensi",name:"Absensi & Kehadiran",ic:"🕗",status:"rencana",grp:"ops",desc:"Check-in/out, izin, cuti, lembur.",will:["Rekap kehadiran","Integrasi Talenta","Feed ke penalti KPI"]},
+ {id:"kontrak",name:"Manajemen Kontrak",ic:"📄",status:"rencana",grp:"ops",desc:"PKWT/PKWTT + alert masa habis.",will:["Alert 90/60/30 hari","Riwayat kontrak","Tautan ke dokumen"]},
+ {id:"disiplin",name:"Disiplin & SP Tracker",ic:"⚠️",status:"rencana",grp:"ops",desc:"Log pelanggaran → SP1 → SP2 → SP3.",will:["Riwayat SP","Masa berlaku otomatis","Feed ke penalti KPI"]},
+ {id:"payroll",name:"Payroll & Slip Gaji",ic:"💰",status:"aktif",grp:"komp",desc:"Gaji, tunjangan, BPJS, PPh21, slip — insentif KPI masuk otomatis."},
+ {id:"dokumen",name:"Dokumen Resmi",ic:"🖋️",status:"rencana",grp:"komp",desc:"SK/SP/PKWT/SKR via Claude → PDF.",will:["Penomoran otomatis","Comply UU 6/2023","Arsip dokumen"]},
+ {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
+];
+const GRP={data:"tilesSegera",ops:"tilesRencana",komp:"tilesRencana"};
+function buildNav(){
+  const groups={utama:"Utama",data:"Data & Karyawan",ops:"Operasional HR",komp:"Kompensasi & Dokumen"};
+  const nav=document.getElementById("nav");let html="";
+  for(const g in groups){
+    html+=`<div class="grp">${groups[g]}</div>`;
+    MODULES.filter(m=>m.grp===g).forEach(m=>{
+      html+=`<a id="nav-${m.id}" onclick="go('${m.id}')"><span class="ic">${m.ic}</span><span class="tx">${m.name}</span><span class="st st-${m.status}">${m.status}</span></a>`;
+    });
+  }
+  nav.innerHTML=html;
+}
+function tile(m){
+  const lock=m.status!=="aktif";
+  return `<div class="tile ${lock?'lock':''}" onclick="go('${m.id}')">
+    <span class="badge b-${m.status}">${m.status}</span>
+    <div class="ic">${m.ic}</div><h3>${m.name}</h3><p>${m.desc}</p></div>`;
+}
+function buildDash(){
+  document.getElementById("tilesAktif").innerHTML=MODULES.filter(m=>m.status==="aktif").map(tile).join("");
+  document.getElementById("tilesSegera").innerHTML=MODULES.filter(m=>m.status==="segera").map(tile).join("");
+  document.getElementById("tilesRencana").innerHTML=MODULES.filter(m=>m.status==="rencana").map(tile).join("");
+}
+let ACTIVE="dashboard";
+function go(id){
+  ACTIVE=id;
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("show"));
+  document.querySelectorAll(".side a").forEach(a=>a.classList.remove("active"));
+  const m=MODULES.find(x=>x.id===id);
+  document.getElementById("nav-"+id).classList.add("active");
+  document.getElementById("viewTitle").textContent=m.name;
+  document.getElementById("periodBox").style.display = (id==="kpi"||id==="payroll")?"flex":"none";
+  if(id==="dashboard"){document.getElementById("view-dashboard").classList.add("show");buildDash();renderDashCards();}
+  else if(id==="kpi"){document.getElementById("view-kpi").classList.add("show");render();}
+  else if(id==="payroll"){document.getElementById("view-payroll").classList.add("show");payLoad();}
+  else{
+    document.getElementById("view-ph").classList.add("show");
+    document.getElementById("phInner").innerHTML=
+     `<div class="ic">${m.ic}</div><h2>${m.name}</h2>
+      <span class="badge2 g${m.status==='segera'?'C':'D'}" style="font-size:11px">${m.status==='segera'?'Akan dibangun berikutnya':'Direncanakan'}</span>
+      <p>${m.desc}</p>
+      ${m.will?`<div class="will"><b>Modul ini nantinya:</b><ul>${m.will.map(w=>`<li>${w}</li>`).join("")}</ul></div>`:""}
+      <p style="margin-top:16px;font-size:12px">Untuk membangun modul ini, beri tahu Cowork: &ldquo;bangun modul ${m.name}&rdquo;.</p>`;
+  }
+  window.scrollTo(0,0);
+}
+
+/* ---------- KPI ENGINE (tervalidasi 11/11) ---------- */
+const WEIGHTS={GT:{sales:.30,oa:.20,noo:.25,sku:.10,npd:.15},Mix:{sales:.30,oa:.20,noo:.25,sku:.10,npd:.15},MT:{sales:.70,oa:0,noo:0,sku:.30,npd:0}};
+const PAGU={Biskuit:2500000,Gaga:1600000,Unicharm:1500000};
+const num=v=>v===""||v==null||isNaN(parseFloat(v))?null:parseFloat(v);
+const salesPt=a=>{a=num(a);if(a==null)return 0;if(a>=100)return 100;if(a>=95)return 90;if(a>=90)return 80;return 0;};
+const oaPt=a=>{a=num(a);if(a==null)return 0;if(a>100)return 100;if(a>=95)return 70;return 0;};
+const nooPt=c=>{c=num(c);if(c==null)return 0;if(c>5)return 100;if(c>=2)return 70;return 0;};
+const pctPt=a=>{a=num(a);if(a==null)return 0;if(a>80)return 100;if(a>70)return 75;if(a>=60)return 50;return 0;};
+const returPt=r=>{r=num(r);if(r==null)return 0;if(r>=1.2)return 100;if(r>=1.0)return 50;return 0;};
+const discPt=t=>{t=num(t);if(t==null)return 0;if(t>=3)return 100;if(t==2)return 80;if(t==1)return 50;return 0;};
+const gradeOf=n=>n>=90?"A":n>=80?"B":n>=70?"C":n>=60?"D":"E";
+const segOf=n=>n>=85?"Orbit":n>=75?"Andalan":n>=65?"Kembangkan":n>=55?"Perhatian":"Saring";
+function compute(e){const w=WEIGHTS[e.tipe]||WEIGHTS.GT;
+  const tp=salesPt(e.sales)*w.sales+oaPt(e.oa)*w.oa+nooPt(e.noo)*w.noo+pctPt(e.sku)*w.sku+pctPt(e.npd)*w.npd;
+  const pen=(num(e.piutangPt)||0)*.30+returPt(e.retur)*.20+discPt(e.telat)*.10;
+  const net=tp-pen;return{tp:+tp.toFixed(1),pen:+pen.toFixed(1),net:+net.toFixed(1),grade:gradeOf(net),seg:segOf(net),ins:Math.round((num(e.pagu)||0)*net/100)};}
+const SEED=[
+ {nik:"BIS-001",nama:"Aditya",div:"Biskuit",tipe:"GT",pagu:2500000,sales:102.27,oa:95.56,noo:3,sku:120,npd:100,piutangPt:30,retur:0.30,telat:2},
+ {nik:"BIS-002",nama:"Aldi",div:"Biskuit",tipe:"GT",pagu:2500000,sales:101.53,oa:75.56,noo:3,sku:107.5,npd:100,piutangPt:30,retur:0.10,telat:2},
+ {nik:"BIS-003",nama:"Ricat",div:"Biskuit",tipe:"GT",pagu:2500000,sales:107.37,oa:104.62,noo:3,sku:110,npd:100,piutangPt:0,retur:1.80,telat:0},
+ {nik:"BIS-004",nama:"Sulistiono",div:"Biskuit",tipe:"GT",pagu:2500000,sales:105.62,oa:98.75,noo:3,sku:117,npd:100,piutangPt:20,retur:0.10,telat:0},
+ {nik:"BIS-005",nama:"Titin",div:"Biskuit",tipe:"GT",pagu:2500000,sales:106.76,oa:96.40,noo:3,sku:106,npd:100,piutangPt:30,retur:0.30,telat:1},
+ {nik:"BIS-006",nama:"Fidiana",div:"Biskuit",tipe:"Mix",pagu:2500000,sales:114.91,oa:112.50,noo:1,sku:104.84,npd:100,piutangPt:30,retur:1.30,telat:0},
+ {nik:"BIS-007",nama:"Hendra",div:"Biskuit",tipe:"MT",pagu:2500000,sales:108.82,oa:"",noo:"",sku:99.33,npd:"",piutangPt:40,retur:0.90,telat:0},
+ {nik:"BIS-008",nama:"Marwan",div:"Biskuit",tipe:"MT",pagu:2500000,sales:105.90,oa:"",noo:"",sku:100,npd:"",piutangPt:40,retur:0.90,telat:1},
+ {nik:"GAG-001",nama:"Anwar",div:"Gaga",tipe:"GT",pagu:1600000,sales:105.86,oa:100,noo:7,sku:106.67,npd:100,piutangPt:40,retur:0.60,telat:4},
+ {nik:"GAG-002",nama:"Beni",div:"Gaga",tipe:"GT",pagu:1600000,sales:100.29,oa:102,noo:6,sku:110,npd:100,piutangPt:40,retur:1.00,telat:0},
+ {nik:"GAG-003",nama:"Jenrico",div:"Gaga",tipe:"GT",pagu:1600000,sales:104.52,oa:96.36,noo:6,sku:110,npd:100,piutangPt:30,retur:0.50,telat:1},
+].map(e=>({spv:"Yoji Untoro",...e}));
+let DATA=[];
+const $=id=>document.getElementById(id);
+const MONTHS=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+function key(){return "ibm_kpi_"+$("year").value+"_"+$("month").value;}
+function rupiah(n){return (n||0).toLocaleString("id-ID");}
+function blankRow(){return{nik:"",nama:"",div:"Biskuit",tipe:"GT",spv:"Yoji Untoro",pagu:PAGU.Biskuit,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:""};}
+function addRow(){DATA.push(blankRow());render();}
+function delRow(i){DATA.splice(i,1);render();saveData();}
+function loadSeed(){DATA=JSON.parse(JSON.stringify(SEED));render();saveData();}
+function clearData(){if(confirm("Kosongkan data periode ini?")){DATA=[];render();saveData();}}
+function render(){
+  const tb=$("tbody");if(!tb)return;tb.innerHTML="";
+  DATA.forEach((e,i)=>{const r=compute(e);const tr=document.createElement("tr");
+    const inp=(f,cls="")=>`<input class="${cls}" data-i="${i}" data-f="${f}" value="${e[f]??""}">`;
+    const sd=`<select data-i="${i}" data-f="div">`+["Biskuit","Gaga","Unicharm"].map(d=>`<option ${e.div===d?"selected":""}>${d}</option>`).join("")+`</select>`;
+    const st=`<select data-i="${i}" data-f="tipe">`+["GT","MT","Mix"].map(t=>`<option ${e.tipe===t?"selected":""}>${t}</option>`).join("")+`</select>`;
+    const sp=`<select data-i="${i}" data-f="piutangPt">`+[0,10,20,30,40].map(p=>`<option ${(+e.piutangPt)===p?"selected":""} value="${p}">${p}</option>`).join("")+`</select>`;
+    tr.innerHTML=`<td>${inp("nik","wide")}</td><td class="name">${inp("nama","name")}</td><td>${sd}</td><td>${st}</td><td>${inp("spv","wide")}</td><td>${inp("pagu","wide")}</td>`+
+      `<td>${inp("sales")}</td><td>${inp("oa")}</td><td>${inp("noo")}</td><td>${inp("sku")}</td><td>${inp("npd")}</td><td>${sp}</td><td>${inp("retur")}</td><td>${inp("telat")}</td>`+
+      `<td class="out">${r.tp}</td><td class="out">${r.pen}</td><td class="out">${r.net}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td><td class="seg">${r.seg}</td><td><button class="del" onclick="delRow(${i})">×</button></td>`;
+    tb.appendChild(tr);});
+  tb.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",ev=>{
+    const i=+ev.target.dataset.i,f=ev.target.dataset.f;DATA[i][f]=ev.target.value;
+    if(f==="div")DATA[i].pagu=PAGU[ev.target.value]||DATA[i].pagu;render();saveData();}));
+  renderKpiCards();
+}
+function statCards(el,n,totIns,avg,gc){
+  el.innerHTML=card("Jumlah Karyawan",n,"")+card("Total Insentif","Rp "+rupiah(totIns),"")+card("Rata Indeks",avg,"/100")+card("Grade","A:"+gc.A+" B:"+gc.B+" C:"+gc.C+" D:"+gc.D+" E:"+gc.E,"","15px");
+}
+function aggregate(){let totIns=0,sumNet=0,gc={A:0,B:0,C:0,D:0,E:0};DATA.forEach(e=>{const r=compute(e);totIns+=r.ins;sumNet+=r.net;gc[r.grade]++;});return{n:DATA.length,totIns,avg:DATA.length?(sumNet/DATA.length).toFixed(1):"0",gc};}
+function renderKpiCards(){const a=aggregate();statCards($("kpiCards"),a.n,a.totIns,a.avg,a.gc);}
+function renderDashCards(){loadData(true);const a=aggregate();
+  $("dashCards").innerHTML=card("Karyawan (pilot)",a.n,"")+card("Total Insentif "+MONTHS[$("month").value-1],"Rp "+rupiah(a.totIns),"")+card("Rata Indeks",a.avg,"/100")+card("Modul Aktif","2","/ 12");}
+function card(l,v,s,fs){return `<div class="card"><div class="lbl">${l}</div><div class="val" ${fs?`style="font-size:${fs}"`:""}>${v} <small>${s||""}</small></div></div>`;}
+function saveData(){try{localStorage.setItem(key(),JSON.stringify(DATA));}catch(e){}}
+function loadData(silent){try{const d=localStorage.getItem(key());DATA=d?JSON.parse(d):[];}catch(e){DATA=[];}if(!silent)render();}
+function exportCSV(){const head=["NIK","Nama","Divisi","Tipe","SPV","Pagu","Sales","OA","NOO","SKU","NPD","PiutangPt","Retur","Telat","Point","Penalti","Net","Grade","Insentif","Segmen"];
+  const rows=DATA.map(e=>{const r=compute(e);return[e.nik,e.nama,e.div,e.tipe,e.spv,e.pagu,e.sales,e.oa,e.noo,e.sku,e.npd,e.piutangPt,e.retur,e.telat,r.tp,r.pen,r.net,r.grade,r.ins,r.seg];});
+  const csv=[head,...rows].map(r=>r.map(c=>`"${c??""}"`).join(",")).join("\n");
+  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="KPI_"+MONTHS[$("month").value-1]+"_"+$("year").value+".csv";a.click();}
+function initPeriod(){const m=$("month"),y=$("year");MONTHS.forEach((nm,i)=>{const o=document.createElement("option");o.value=i+1;o.textContent=nm;m.appendChild(o);});
+  for(let yy=2026;yy<=2028;yy++){const o=document.createElement("option");o.value=yy;o.textContent=yy;y.appendChild(o);}m.value=7;y.value=2026;
+  m.onchange=y.onchange=()=>{if(ACTIVE==="kpi"){loadData();}else if(ACTIVE==="payroll"){payLoad();}renderDashCards();};}
+/* ---------- PAYROLL ---------- */
+let PAY=[];
+const NPN=v=>{v=parseFloat(v);return isNaN(v)?0:v;};
+function payKey(){return "ibm_pay_"+$("year").value+"_"+$("month").value;}
+function payBlank(){return{nik:"",nama:"",pokok:0,transport:0,makan:0,jabatan:0,lembur:0,insentif:0,pph21:0};}
+function payCompute(p){
+  const kotor=NPN(p.pokok)+NPN(p.transport)+NPN(p.makan)+NPN(p.jabatan)+NPN(p.lembur)+NPN(p.insentif);
+  const base=NPN(p.pokok)+NPN(p.jabatan);
+  const jht=Math.round(base*0.02), jp=Math.round(base*0.01), kes=Math.round(Math.min(base,12000000)*0.01);
+  const totBpjs=jht+jp+kes; const potong=totBpjs+NPN(p.pph21); const bersih=kotor-potong;
+  return{kotor,jht,jp,kes,totBpjs,potong,bersih};
+}
+function payAdd(){PAY.push(payBlank());renderPay();}
+function payDel(i){PAY.splice(i,1);renderPay();paySave();}
+function paySave(){try{localStorage.setItem(payKey(),JSON.stringify(PAY));}catch(e){}}
+function payLoad(silent){
+  try{const d=localStorage.getItem(payKey());PAY=d?JSON.parse(d):[];}catch(e){PAY=[];}
+  if(PAY.length===0){PAY=SEED.map(e=>({nik:e.nik,nama:e.nama,pokok:0,transport:0,makan:0,jabatan:0,lembur:0,insentif:0,pph21:0}));}
+  if(!silent)renderPay();
+}
+function payPull(){
+  let map={};
+  try{const d=localStorage.getItem("ibm_kpi_"+$("year").value+"_"+$("month").value);if(d){JSON.parse(d).forEach(e=>{map[e.nama]=compute(e).ins;});}}catch(e){}
+  let cnt=0;PAY.forEach(p=>{if(map[p.nama]!=null){p.insentif=map[p.nama];cnt++;}});
+  renderPay();paySave();
+  alert(cnt?("Insentif KPI "+MONTHS[$("month").value-1]+" ditarik untuk "+cnt+" karyawan."):"Belum ada data KPI di periode ini. Buka modul KPI & Insentif, isi/Muat Contoh, lalu coba lagi.");
+}
+function renderPay(){
+  const tb=$("payBody");if(!tb)return;tb.innerHTML="";
+  PAY.forEach((p,i)=>{const r=payCompute(p);const tr=document.createElement("tr");
+    const inp=(f,cls="wide")=>`<input class="${cls}" data-i="${i}" data-f="${f}" value="${p[f]??""}">`;
+    tr.innerHTML=`<td>${inp("nik")}</td><td class="name">${inp("nama","name")}</td>`+
+      `<td>${inp("pokok")}</td><td>${inp("transport")}</td><td>${inp("makan")}</td><td>${inp("jabatan")}</td><td>${inp("lembur")}</td><td>${inp("insentif")}</td>`+
+      `<td class="out">${rupiah(r.kotor)}</td>`+
+      `<td>${rupiah(r.jht)}</td><td>${rupiah(r.kes)}</td><td>${rupiah(r.jp)}</td><td>${inp("pph21")}</td>`+
+      `<td class="out ins">${rupiah(r.bersih)}</td>`+
+      `<td><button onclick="slip(${i})">🧾</button></td><td><button class="del" onclick="payDel(${i})">×</button></td>`;
+    tb.appendChild(tr);});
+  tb.querySelectorAll("input").forEach(el=>el.addEventListener("input",ev=>{
+    const i=+ev.target.dataset.i,f=ev.target.dataset.f;PAY[i][f]=ev.target.value;renderPay();paySave();}));
+  let totBersih=0,totKotor=0,totPot=0;PAY.forEach(p=>{const r=payCompute(p);totBersih+=r.bersih;totKotor+=r.kotor;totPot+=r.potong;});
+  $("payCards").innerHTML=card("Jumlah Karyawan",PAY.length,"")+card("Total Gaji Kotor","Rp "+rupiah(totKotor),"")+card("Total Potongan","Rp "+rupiah(totPot),"")+card("Total Gaji Bersih","Rp "+rupiah(totBersih),"");
+}
+function payCSV(){const head=["NIK","Nama","Pokok","Transport","Makan","Jabatan","Lembur","Insentif","GajiKotor","JHT","Kesehatan","JP","PPh21","GajiBersih"];
+  const rows=PAY.map(p=>{const r=payCompute(p);return[p.nik,p.nama,p.pokok,p.transport,p.makan,p.jabatan,p.lembur,p.insentif,r.kotor,r.jht,r.kes,r.jp,p.pph21,r.bersih];});
+  const csv=[head,...rows].map(r=>r.map(c=>`"${c??""}"`).join(",")).join("\n");
+  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="Payroll_"+MONTHS[$("month").value-1]+"_"+$("year").value+".csv";a.click();}
+function slip(i){
+  const p=PAY[i],r=payCompute(p),per=MONTHS[$("month").value-1]+" "+$("year").value;
+  const row=(l,v,b)=>`<tr><td style="padding:3px 0">${l}</td><td style="text-align:right;padding:3px 0;${b?'font-weight:bold':''}">${rupiah(v)}</td></tr>`;
+  const w=window.open("","_blank","width=520,height=720");
+  w.document.write(`<html><head><title>Slip Gaji - ${p.nama}</title><style>
+   body{font-family:Arial;color:#1f2430;padding:24px;font-size:13px}
+   h2{color:#1F3864;margin:0}.sub{color:#666;font-size:12px;margin:2px 0 14px}
+   table{width:100%;border-collapse:collapse}.sec{font-weight:bold;color:#1F3864;border-bottom:1px solid #ccc;padding-top:10px}
+   .net{background:#eef5ee;font-weight:bold;font-size:15px}.net td{padding:8px 4px}
+   .sign{margin-top:30px;display:flex;justify-content:space-between;font-size:12px}
+  </style></head><body>
+   <h2>SLIP GAJI — IBM GROUP</h2><div class="sub">PT Inti Bharu Mas &middot; Periode ${per} &middot; RAHASIA</div>
+   <table>
+    <tr><td>Nama</td><td style="text-align:right">${p.nama}</td></tr>
+    <tr><td>NIK</td><td style="text-align:right">${p.nik||"-"}</td></tr>
+    <tr><td class="sec" colspan="2">PENDAPATAN</td></tr>
+    ${row("Gaji Pokok",p.pokok)}${row("Tunjangan Transport",p.transport)}${row("Tunjangan Makan",p.makan)}${row("Tunjangan Jabatan",p.jabatan)}${row("Upah Lembur",p.lembur)}${row("Insentif KPI",p.insentif)}
+    ${row("Gaji Kotor",r.kotor,true)}
+    <tr><td class="sec" colspan="2">POTONGAN</td></tr>
+    ${row("BPJS JHT (2%)",r.jht)}${row("BPJS Kesehatan (1%)",r.kes)}${row("BPJS Jaminan Pensiun (1%)",r.jp)}${row("PPh 21",p.pph21)}
+    ${row("Total Potongan",r.potong,true)}
+    <tr class="net"><td>GAJI BERSIH</td><td style="text-align:right">Rp ${rupiah(r.bersih)}</td></tr>
+   </table>
+   <div class="sign"><div>Karyawan<br><br><br>(${p.nama})</div><div>HRD / Direktur<br><br><br>(________)</div></div>
+   <script>window.onload=function(){window.print();}<\/script>
+  </body></html>`);w.document.close();
+}
+/* init */
+buildNav();initPeriod();go("dashboard");
+</script>
+</body>
+</html>
