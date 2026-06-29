@@ -65,6 +65,11 @@ th{background:var(--navy);color:#fff;font-size:11px;position:sticky;top:0;z-inde
 td.name{text-align:left}td input,td select{font-family:inherit;font-size:13px;width:60px;padding:4px;border:1px solid #cfd6e2;border-radius:5px;text-align:center;background:#eaf1fb}
 td input.name{width:88px;text-align:left;background:#fff;font-weight:bold}td input.wide{width:78px}
 td.out{font-weight:bold;background:#eef5ee}
+.hidetgt .tgt{display:none}.hideconf .conf{display:none}
+th.tgt{background:#7a5b1e}td.tgt input{background:#fff7e6}
+td.tgt,th.tgt{border-left:2px solid #d8b24a}
+input:disabled,select:disabled{background:#eef0f3 !important;color:#9aa1ad;cursor:not-allowed}
+button:disabled{opacity:.45;cursor:not-allowed}
 .badge2{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:bold;color:#fff}
 .gA{background:var(--green)}.gB{background:var(--teal)}.gC{background:var(--amber)}.gD{background:var(--orange)}.gE{background:var(--red)}
 .ins{font-weight:bold;color:var(--navy)}.del{color:var(--red);cursor:pointer;border:none;background:none;font-size:15px}.seg{font-size:11px;color:var(--muted)}
@@ -120,7 +125,7 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
   <nav class="side">
     <div class="brand"><b>HR IBM GRUP</b><span>PT Inti Bharu Mas</span></div>
     <div id="nav"></div>
-    <div class="foot">v1.1 · Modul aktif: 3/12<br>Pilot Juli 2026</div>
+    <div class="foot" id="appFoot">Pilot Juli 2026</div>
   </nav>
   <div class="main">
     <div class="top">
@@ -150,19 +155,24 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
       <!-- KPI -->
       <div class="view" id="view-kpi">
         <div class="toolbar">
-          <button class="primary" onclick="addRow()">+ Tambah Karyawan</button>
-          <button onclick="cloudSave()">💾 Simpan ke Cloud</button>
+          <button class="primary" data-edit="1" onclick="addRow()">+ Tambah Karyawan</button>
+          <button data-edit="1" onclick="cloudSave()">💾 Simpan ke Cloud</button>
+          <button id="btnTgt" onclick="toggleTgt()">🎯 Target</button>
+          <button id="btnVal" style="display:none" onclick="toggleVal()">👁 Penilaian</button>
+          <button id="btnLock" style="display:none" onclick="toggleLock()">🔒 Kunci</button>
           <button onclick="exportCSV()">⬇ Ekspor CSV</button>
           <button onclick="window.print()">🖨 Cetak</button>
-          <button onclick="clearData()">Kosongkan</button>
+          <button data-edit="1" onclick="clearData()">Kosongkan</button>
+          <span id="lockNote" style="display:none;color:#c0392b;font-size:12px;align-self:center">🔒 Terkunci — hanya admin dapat mengubah</span>
           <span id="cloudStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#6b7280"></span>
         </div>
-        <div class="cards" id="kpiCards"></div>
+        <div class="cards conf" id="kpiCards"></div>
         <div class="tablewrap">
           <table><thead>
             <tr><th rowspan="2">NIK</th><th rowspan="2">Nama</th><th rowspan="2">Divisi</th><th rowspan="2">Tipe</th><th rowspan="2">SPV</th><th rowspan="2">Pagu</th>
             <th class="grp" colspan="5">KPI Positif (%)</th><th class="grp" colspan="3">Penalti</th>
-            <th rowspan="2">Point</th><th rowspan="2">Pen.</th><th rowspan="2">Net</th><th rowspan="2">Grade</th><th rowspan="2">Insentif</th><th rowspan="2">Segmen</th><th rowspan="2"></th></tr>
+            <th rowspan="2" class="conf">Point</th><th rowspan="2" class="conf">Pen.</th><th rowspan="2" class="conf">Net</th><th rowspan="2" class="conf">Grade</th><th rowspan="2" class="conf">Insentif</th><th rowspan="2" class="conf">Segmen</th>
+            <th rowspan="2" class="tgt">T.Rp</th><th rowspan="2" class="tgt">T.AO</th><th rowspan="2" class="tgt">T.SKU</th><th rowspan="2" class="tgt">T.NOO</th><th rowspan="2" class="tgt">T.Drop</th><th rowspan="2"></th></tr>
             <tr><th>Sales</th><th>OA</th><th>NOO</th><th>SKU</th><th>NPD</th><th>Piut.</th><th>Retur</th><th>Telat</th></tr>
           </thead><tbody id="tbody"></tbody></table>
         </div>
@@ -172,6 +182,31 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
             <li>Penalti: Piutang 0/10/20/30/40 ×30%; Retur ≥1,2→100 / 1–1,2→50 ×20%; Telat 1/2/≥3 →50/80/100 ×10%.</li>
             <li>Nilai Bersih (Indeks) = Point − Penalti. Insentif = Pagu × Net%. Grade A≥90 … E&lt;60.</li>
             <li style="color:#a32d2d">Memakai skema berjalan (pagu × net%), tervalidasi 11/11 ke slip Mei 2026.</li>
+          </ul>
+        </details>
+      </div>
+      <!-- TARGET -->
+      <div class="view" id="view-target">
+        <div class="toolbar">
+          <label style="align-self:center;font-size:13px;font-weight:bold">Jabatan:</label>
+          <select id="tgJab" onchange="targetRender()" style="font-weight:bold">
+            <option value="Salesman">Salesman</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Manager">Manager</option>
+            <option value="KACAB">Kepala Cabang (KACAB)</option>
+          </select>
+          <button class="primary" data-tedit="1" onclick="tgAdd()">+ Tambah</button>
+          <button data-tedit="1" onclick="tgSave()">💾 Simpan ke Cloud</button>
+          <span id="tgLockNote" style="display:none;color:#c0392b;font-size:12px;align-self:center">🔒 Terkunci — hanya admin</span>
+          <span id="tgStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#6b7280"></span>
+        </div>
+        <div class="tablewrap"><table style="min-width:900px"><thead id="tgHead"></thead><tbody id="tgBody"></tbody></table></div>
+        <details><summary>Tentang Modul Target</summary>
+          <ul>
+            <li>Pilih <b>Jabatan</b> di atas, lalu isi target tiap orang untuk periode terpilih (bulan/tahun di kanan atas).</li>
+            <li>Salesman &amp; Supervisor per <b>Divisi</b>; Manager per <b>Fungsi</b> (Sales/Pajak/Accounting/IT/Operasional/HRD); KACAB per <b>Cabang</b>.</li>
+            <li>Kolom target berbeda tiap jabatan karena rumus insentif tiap bagian berbeda (KACAB ≠ Sales).</li>
+            <li>Target menjadi pembagi <b>% pencapaian</b> saat realisasi dari Orlansoft masuk (Tahap B).</li>
           </ul>
         </details>
       </div>
@@ -237,6 +272,7 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
 const MODULES=[
  {id:"dashboard",name:"Dashboard",ic:"📊",status:"aktif",grp:"utama",desc:"Ringkasan & navigasi seluruh modul."},
  {id:"kpi",name:"KPI & Insentif",ic:"🎯",status:"aktif",grp:"utama",desc:"Hitung skor KPI & insentif otomatis per bulan."},
+ {id:"target",name:"Target",ic:"🏁",status:"aktif",grp:"utama",desc:"Set target per jabatan: KACAB, Manager, Supervisor, Salesman (per divisi)."},
  {id:"users",name:"Pengguna",ic:"👥",status:"aktif",grp:"utama",desc:"Kelola pengguna & izin admin.",admin:true},
  {id:"master",name:"Master Data Karyawan",ic:"👤",status:"segera",grp:"data",desc:"Profil, NIK, jabatan, divisi, BPJS, rekening, keluarga.",will:["Data lengkap tiap karyawan","Cek anti-fraud (rekening & NIK)","Dasar semua modul lain"]},
  {id:"selfservice",name:"Self-Service Karyawan",ic:"📱",status:"segera",grp:"data",desc:"Karyawan isi data sendiri via HP, HRD validasi.",will:["Form pengisian di HP","Validasi & approval HRD","Data terkunci di master"]},
@@ -250,6 +286,9 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
+let SHOWTGT=false,SHOWVAL=false,LOCKED=false;
+const APP_VER="1.3", APP_DATE="29 Jun 2026"; // <-- NAIKKAN tiap ada perubahan
+const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 const GRP={data:"tilesSegera",ops:"tilesRencana",komp:"tilesRencana"};
 function buildNav(){
@@ -262,6 +301,7 @@ function buildNav(){
     });
   }
   nav.innerHTML=html;
+  const f=document.getElementById("appFoot");if(f)f.innerHTML="v"+APP_VER+" · "+APP_DATE+"<br>Modul aktif: "+naktif()+"/12 · Pilot";
 }
 function tile(m){
   const lock=m.status!=="aktif";
@@ -283,10 +323,11 @@ function go(id){
   const m=MODULES.find(x=>x.id===id);
   document.getElementById("nav-"+id).classList.add("active");
   document.getElementById("viewTitle").textContent=m.name;
-  document.getElementById("periodBox").style.display = (id==="kpi"||id==="payroll")?"flex":"none";
+  document.getElementById("periodBox").style.display = (id==="kpi"||id==="payroll"||id==="target")?"flex":"none";
   const _df=document.getElementById("divFab");if(_df)_df.style.display=(id==="kpi")?"block":"none";
   if(id==="dashboard"){document.getElementById("view-dashboard").classList.add("show");buildDash();renderDashCards();}
   else if(id==="kpi"){document.getElementById("view-kpi").classList.add("show");cloudLoad();}
+  else if(id==="target"){document.getElementById("view-target").classList.add("show");targetLoad();}
   else if(id==="payroll"){document.getElementById("view-payroll").classList.add("show");payLoad();}
   else if(id==="users"){document.getElementById("view-users").classList.add("show");usersLoad();}
   else{
@@ -359,18 +400,20 @@ async function cloudLoad(){
   try{
     const {data,error}=await SB.from("kpi_entries").select("*").eq("period_year",Y()).eq("period_month",M());
     if(error)throw error;
-    DATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama,div:d.divisi||"Biskuit",tipe:d.tipe||"GT",spv:d.spv||"Yoji Untoro",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??""}));
+    DATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama,div:d.divisi||"Biskuit",tipe:d.tipe||"GT",spv:d.spv||"Yoji Untoro",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??"",targetRp:d.target_rp??"",targetAo:d.target_ao??"",targetSku:d.target_sku??"",targetNoo:d.target_noo??"",targetDrop:d.target_drop??""}));
     try{localStorage.setItem(key(),JSON.stringify(DATA));}catch(e){}
+    await loadLock();
     setCloud("tersinkron","#1d9e75");render();
   }catch(e){setCloud("offline — pakai data lokal","#c0392b");loadData();}
 }
 let saveTimer=null;
 function cloudSaveDebounced(){saveData();clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,800);}
 async function cloudSave(){
+  if(LOCKED&&!isAdmin()){setCloud("terkunci — hanya admin","#c0392b");return;}
   saveData();
   if(!SB)await loadSupa();
   if(!SB){setCloud("offline — tersimpan lokal","#c0392b");return;}
-  const recs=DATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>({period_year:Y(),period_month:M(),nik:e.nik||null,nama:e.nama,divisi:e.div,tipe:e.tipe,spv:e.spv,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat)}));
+  const recs=DATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>({period_year:Y(),period_month:M(),nik:e.nik||null,nama:e.nama,divisi:e.div,tipe:e.tipe,spv:e.spv,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),target_rp:toNum(e.targetRp),target_ao:toNum(e.targetAo),target_sku:toNum(e.targetSku),target_noo:toNum(e.targetNoo),target_drop:toNum(e.targetDrop)}));
   if(!recs.length){setCloud("tersinkron","#1d9e75");return;}
   setCloud("menyimpan…");
   try{const {error}=await SB.from("kpi_entries").upsert(recs,{onConflict:"period_year,period_month,nama"});if(error)throw error;setCloud("tersimpan ✓","#1d9e75");}
@@ -382,22 +425,26 @@ const $=id=>document.getElementById(id);
 const MONTHS=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 function key(){return "ibm_kpi_"+$("year").value+"_"+$("month").value;}
 function rupiah(n){return (n||0).toLocaleString("id-ID");}
-function blankRow(){const d=(DIVFILTER!=="Semua")?DIVFILTER:DIVISIONS[0];return{nik:"",nama:"",div:d,tipe:"GT",spv:"Yoji Untoro",pagu:PAGU[d]||2500000,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:""};}
+function blankRow(){const d=(DIVFILTER!=="Semua")?DIVFILTER:DIVISIONS[0];return{nik:"",nama:"",div:d,tipe:"GT",spv:"Yoji Untoro",pagu:PAGU[d]||2500000,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:"",targetRp:"",targetAo:"",targetSku:"",targetNoo:"",targetDrop:""};}
 function addRow(){DATA.push(blankRow());render();}
 function delRow(i){const nm=DATA[i]&&DATA[i].nama;DATA.splice(i,1);render();saveData();cloudDelete(nm);}
 function loadSeed(){DATA=JSON.parse(JSON.stringify(SEED));render();cloudSave();}
 function clearData(){if(confirm("Kosongkan data periode ini? (termasuk di cloud)")){DATA=[];render();saveData();cloudClear();}}
 function render(){
   const tb=$("tbody");if(!tb)return;tb.innerHTML="";
+  const ro=(LOCKED&&!isAdmin());const dis=ro?" disabled":"";
   DATA.forEach((e,i)=>{if(DIVFILTER!=="Semua"&&e.div!==DIVFILTER)return;const r=compute(e);const tr=document.createElement("tr");
-    const inp=(f,cls="")=>`<input class="${cls}" data-i="${i}" data-f="${f}" value="${e[f]??""}">`;
-    const sd=`<select data-i="${i}" data-f="div" style="width:104px">`+(DIVISIONS.includes(e.div)?"":`<option value="" selected>— pilih divisi —</option>`)+DIVISIONS.map(d=>`<option ${e.div===d?"selected":""}>${d}</option>`).join("")+`</select>`;
-    const st=`<select data-i="${i}" data-f="tipe">`+["GT","MT","Mix"].map(t=>`<option ${e.tipe===t?"selected":""}>${t}</option>`).join("")+`</select>`;
-    const sp=`<select data-i="${i}" data-f="piutangPt">`+[0,10,20,30,40].map(p=>`<option ${(+e.piutangPt)===p?"selected":""} value="${p}">${p}</option>`).join("")+`</select>`;
+    const inp=(f,cls="")=>`<input class="${cls}" data-i="${i}" data-f="${f}" value="${e[f]??""}"${dis}>`;
+    const sd=`<select data-i="${i}" data-f="div" style="width:104px"${dis}>`+(DIVISIONS.includes(e.div)?"":`<option value="" selected>— pilih divisi —</option>`)+DIVISIONS.map(d=>`<option ${e.div===d?"selected":""}>${d}</option>`).join("")+`</select>`;
+    const st=`<select data-i="${i}" data-f="tipe"${dis}>`+["GT","MT","Mix"].map(t=>`<option ${e.tipe===t?"selected":""}>${t}</option>`).join("")+`</select>`;
+    const sp=`<select data-i="${i}" data-f="piutangPt"${dis}>`+[0,10,20,30,40].map(p=>`<option ${(+e.piutangPt)===p?"selected":""} value="${p}">${p}</option>`).join("")+`</select>`;
     tr.innerHTML=`<td>${inp("nik","wide")}</td><td class="name">${inp("nama","name")}</td><td>${sd}</td><td>${st}</td><td>${inp("spv","wide")}</td><td>${inp("pagu","wide")}</td>`+
       `<td>${inp("sales")}</td><td>${inp("oa")}</td><td>${inp("noo")}</td><td>${inp("sku")}</td><td>${inp("npd")}</td><td>${sp}</td><td>${inp("retur")}</td><td>${inp("telat")}</td>`+
-      `<td class="out">${r.tp}</td><td class="out">${r.pen}</td><td class="out">${r.net}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td><td class="seg">${r.seg}</td><td><button class="del" onclick="delRow(${i})">×</button></td>`;
+      `<td class="out conf">${r.tp}</td><td class="out conf">${r.pen}</td><td class="out conf">${r.net}</td><td class="conf"><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins conf">${rupiah(r.ins)}</td><td class="seg conf">${r.seg}</td>`+
+      `<td class="tgt">${inp("targetRp","wide")}</td><td class="tgt">${inp("targetAo")}</td><td class="tgt">${inp("targetSku")}</td><td class="tgt">${inp("targetNoo")}</td><td class="tgt">${inp("targetDrop")}</td>`+
+      `<td><button class="del" onclick="delRow(${i})"${dis}>×</button></td>`;
     tb.appendChild(tr);});
+  applyColVis();updateLockUI();
   tb.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",ev=>{
     const i=+ev.target.dataset.i,f=ev.target.dataset.f;DATA[i][f]=ev.target.value;
     if(f==="div")DATA[i].pagu=PAGU[ev.target.value]||DATA[i].pagu;render();cloudSaveDebounced();}));
@@ -408,11 +455,68 @@ function statCards(el,n,totIns,avg,gc){
 }
 function aggregate(){let totIns=0,sumNet=0,gc={A:0,B:0,C:0,D:0,E:0};DATA.forEach(e=>{const r=compute(e);totIns+=r.ins;sumNet+=r.net;gc[r.grade]++;});return{n:DATA.length,totIns,avg:DATA.length?(sumNet/DATA.length).toFixed(1):"0",gc};}
 function renderKpiCards(){let totIns=0,sumNet=0,gc={A:0,B:0,C:0,D:0,E:0},n=0;DATA.forEach(e=>{if(DIVFILTER!=="Semua"&&e.div!==DIVFILTER)return;const r=compute(e);totIns+=r.ins;sumNet+=r.net;gc[r.grade]++;n++;});statCards($("kpiCards"),n,totIns,n?(sumNet/n).toFixed(1):"0",gc);}
+function applyColVis(){const v=$("view-kpi");if(!v)return;v.classList.toggle("hidetgt",!SHOWTGT);v.classList.toggle("hideconf",!SHOWVAL);}
+function toggleTgt(){SHOWTGT=!SHOWTGT;const b=$("btnTgt");if(b)b.classList.toggle("primary",SHOWTGT);applyColVis();}
+function toggleVal(){if(!isAdmin())return;SHOWVAL=!SHOWVAL;const b=$("btnVal");if(b){b.classList.toggle("primary",SHOWVAL);b.textContent=SHOWVAL?"🙈 Sembunyikan":"👁 Penilaian";}applyColVis();}
+async function loadLock(){LOCKED=false;if(!SB)return;try{const{data}=await SB.from("period_locks").select("locked").eq("period_year",Y()).eq("period_month",M()).maybeSingle();LOCKED=!!(data&&data.locked);}catch(e){}updateLockUI();}
+async function toggleLock(){if(!isAdmin())return;LOCKED=!LOCKED;updateLockUI();render();if(!SB)await loadSupa();try{await SB.from("period_locks").upsert({period_year:Y(),period_month:M(),locked:LOCKED,locked_by:(CURRENT&&CURRENT.username)||null,locked_at:new Date().toISOString()},{onConflict:"period_year,period_month"});}catch(e){}}
+function updateLockUI(){const adm=isAdmin();const bl=$("btnLock");if(bl){bl.style.display=adm?"":"none";bl.textContent=LOCKED?"🔓 Buka Kunci":"🔒 Kunci";bl.classList.toggle("primary",LOCKED);}const bv=$("btnVal");if(bv)bv.style.display=adm?"":"none";const n=$("lockNote");if(n)n.style.display=(LOCKED&&!adm)?"inline":"none";const ro=(LOCKED&&!adm);document.querySelectorAll('#view-kpi [data-edit]').forEach(b=>b.disabled=ro);}
+// ===== MODUL TARGET (bertingkat per jabatan) =====
+const TGSPEC={
+  Salesman:{unitLabel:"Divisi",units:DIVISIONS,fields:["Target Rupiah","Target AO","Target SKU","Target NOO","Drop Size"]},
+  Supervisor:{unitLabel:"Divisi",units:DIVISIONS,fields:["Omzet Tim (Rp)","AO Tim","NOO Tim","SKU Tim","Coverage (%)"]},
+  Manager:{unitLabel:"Fungsi",units:["Sales","Pajak","Accounting","IT","Operasional","HRD"],fields:["Target Utama","Target 2","Target 3","Ketepatan (%)","Skor KPI"]},
+  KACAB:{unitLabel:"Cabang",units:["Bandar Lampung","Metro","Palembang"],fields:["Omzet Cabang (Rp)","Collection/AR (Rp)","Growth (%)","Coverage Outlet","NOO Cabang"]}
+};
+let TGDATA=[];
+function tgJabVal(){const s=$("tgJab");return s?s.value:"Salesman";}
+function tgStat(t,c){const st=$("tgStatus");if(st){st.textContent=t;st.style.color=c||"#6b7280";}}
+async function targetLoad(){
+  if(!SB)await loadSupa();
+  if(!SB){tgStat("offline — pakai cloud nanti","#c0392b");TGDATA=[];targetRender();return;}
+  tgStat("memuat…");
+  try{
+    const {data,error}=await SB.from("targets").select("*").eq("period_year",Y()).eq("period_month",M());
+    if(error)throw error;
+    TGDATA=(data||[]).map(d=>({jabatan:d.jabatan,unit:d.unit||"",nama:d.nama||"",v1:d.v1??"",v2:d.v2??"",v3:d.v3??"",v4:d.v4??"",v5:d.v5??"",catatan:d.catatan||""}));
+    await loadLock();tgStat("tersinkron","#1d9e75");
+  }catch(e){tgStat("offline — pastikan tabel 'targets' sudah dibuat","#c0392b");TGDATA=[];}
+  targetRender();
+}
+function tgAdd(){if(LOCKED&&!isAdmin())return;const j=tgJabVal();const sp=TGSPEC[j];TGDATA.push({jabatan:j,unit:sp.units[0],nama:"",v1:"",v2:"",v3:"",v4:"",v5:"",catatan:""});targetRender();}
+function tgDel(i){if(LOCKED&&!isAdmin())return;TGDATA.splice(i,1);targetRender();}
+function targetRender(){
+  const j=tgJabVal();const sp=TGSPEC[j];const ro=(LOCKED&&!isAdmin());const dis=ro?" disabled":"";
+  const head=$("tgHead");if(!head)return;
+  head.innerHTML=`<tr><th>${sp.unitLabel}</th><th>Nama</th>`+sp.fields.map(f=>`<th>${f}</th>`).join("")+`<th>Catatan</th><th></th></tr>`;
+  const body=$("tgBody");body.innerHTML="";
+  TGDATA.forEach((e,gi)=>{if(e.jabatan!==j)return;
+    const us=`<select data-gi="${gi}" data-tf="unit" style="width:120px"${dis}>`+sp.units.map(u=>`<option ${e.unit===u?"selected":""}>${u}</option>`).join("")+`</select>`;
+    const inp=(f)=>`<input class="wide" data-gi="${gi}" data-tf="${f}" value="${e[f]??""}"${dis}>`;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${us}</td><td class="name"><input class="name" data-gi="${gi}" data-tf="nama" value="${e.nama??""}"${dis}></td>`+
+      `<td>${inp("v1")}</td><td>${inp("v2")}</td><td>${inp("v3")}</td><td>${inp("v4")}</td><td>${inp("v5")}</td>`+
+      `<td><input class="wide" data-gi="${gi}" data-tf="catatan" value="${e.catatan??""}"${dis}></td>`+
+      `<td><button class="del" onclick="tgDel(${gi})"${dis}>×</button></td>`;
+    body.appendChild(tr);});
+  body.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",ev=>{const gi=+ev.target.dataset.gi,f=ev.target.dataset.tf;TGDATA[gi][f]=ev.target.value;}));
+  const n=$("tgLockNote");if(n)n.style.display=ro?"inline":"none";document.querySelectorAll('#view-target [data-tedit]').forEach(b=>b.disabled=ro);
+}
+async function tgSave(){
+  if(LOCKED&&!isAdmin()){tgStat("terkunci — hanya admin","#c0392b");return;}
+  if(!SB)await loadSupa();
+  if(!SB){tgStat("offline — tidak tersimpan","#c0392b");return;}
+  const recs=TGDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>({period_year:Y(),period_month:M(),jabatan:e.jabatan,unit:e.unit||"-",nama:e.nama,v1:toNum(e.v1),v2:toNum(e.v2),v3:toNum(e.v3),v4:toNum(e.v4),v5:toNum(e.v5),catatan:e.catatan||null}));
+  if(!recs.length){tgStat("tidak ada data terisi");return;}
+  tgStat("menyimpan…");
+  try{const {error}=await SB.from("targets").upsert(recs,{onConflict:"period_year,period_month,jabatan,unit,nama"});if(error)throw error;tgStat("tersimpan ✓","#1d9e75");}
+  catch(e){tgStat("gagal — pastikan tabel 'targets' sudah dibuat","#c0392b");}
+}
 function buildDivMenu(){let h='<div class="divm-item" onclick="pickDiv(\'Semua\')" style="padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:bold">★ Semua Divisi</div>';for(const city in DIVGROUPS){h+='<div style="font-size:11px;color:#888;text-transform:uppercase;padding:8px 10px 2px;letter-spacing:.4px">'+city+'</div>';DIVGROUPS[city].forEach(d=>{h+='<div class="divm-item" onclick="pickDiv(\''+d+'\')" style="padding:7px 10px;border-radius:7px;cursor:pointer">'+d+'</div>';});}const m=document.getElementById('divMenu');if(m)m.innerHTML=h;}
 function toggleDivMenu(){const m=document.getElementById('divMenu');if(m)m.style.display=(m.style.display==='none'?'block':'none');}
 function pickDiv(d){DIVFILTER=d;const l=document.getElementById('divFabLabel');if(l)l.textContent=(d==='Semua'?'Semua Divisi':d);const m=document.getElementById('divMenu');if(m)m.style.display='none';render();}
 function renderDashCards(){loadData(true);const a=aggregate();
-  $("dashCards").innerHTML=card("Karyawan (pilot)",a.n,"")+card("Total Insentif "+MONTHS[$("month").value-1],"Rp "+rupiah(a.totIns),"")+card("Rata Indeks",a.avg,"/100")+card("Modul Aktif","3","/ 12");}
+  $("dashCards").innerHTML=card("Karyawan (pilot)",a.n,"")+card("Total Insentif "+MONTHS[$("month").value-1],"Rp "+rupiah(a.totIns),"")+card("Rata Indeks",a.avg,"/100")+card("Modul Aktif",""+naktif(),"/ 12");}
 function card(l,v,s,fs){return `<div class="card"><div class="lbl">${l}</div><div class="val" ${fs?`style="font-size:${fs}"`:""}>${v} <small>${s||""}</small></div></div>`;}
 function saveData(){try{localStorage.setItem(key(),JSON.stringify(DATA));}catch(e){}}
 function loadData(silent){try{const d=localStorage.getItem(key());DATA=d?JSON.parse(d):[];}catch(e){DATA=[];}if(!silent)render();}
