@@ -156,40 +156,30 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
         <div class="sec-title">Direncanakan</div>
         <div class="tiles" id="tilesRencana"></div>
       </div>
-      <!-- KPI -->
+      <!-- INSENTIF (baca + hitung dari Filing Cabinet) -->
       <div class="view" id="view-kpi">
         <div class="toolbar">
-          <button class="primary" data-edit="1" onclick="addRow()">+ Tambah Karyawan</button>
-          <button data-edit="1" onclick="cloudSave()">💾 Save</button>
-          <span style="position:relative;display:inline-block">
-            <button id="btnDiv" onclick="toggleDivMenu()">🏢 <span id="divFabLabel">Semua Divisi</span></button>
-            <div id="divMenu" style="display:none;position:absolute;top:40px;left:0;background:#fff;border:1px solid #e1e5ec;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.15);padding:8px;width:215px;max-height:62vh;overflow:auto;z-index:160"></div>
-          </span>
-          <button id="btnTgt" onclick="toggleTgt()">🎯 Target</button>
-          <button id="btnVal" style="display:none" onclick="toggleVal()">👁 Penilaian</button>
-          <button id="btnLock" style="display:none" onclick="toggleLock()">🔒 Kunci</button>
-          <button onclick="exportCSV()">⬇ Ekspor CSV</button>
+          <button class="primary" onclick="insLoad()">↻ Muat dari Filing Cabinet</button>
+          <label style="align-self:center;font-size:13px;font-weight:bold">Usaha:</label>
+          <select id="insUsaha" onchange="insRender()">
+            <option value="Semua">Semua Usaha</option>
+            <option value="IBM-GRUP">IBM-GRUP</option>
+            <option value="OTO-GRUP">OTO-GRUP</option>
+            <option value="EXSPEDISI">EXSPEDISI</option>
+          </select>
+          <button onclick="insCSV()">⬇ Ekspor CSV</button>
           <button onclick="window.print()">🖨 Cetak</button>
-          <button data-edit="1" onclick="clearData()">Kosongkan</button>
-          <span id="lockNote" style="display:none;color:#c0392b;font-size:12px;align-self:center">🔒 Terkunci — hanya admin dapat mengubah</span>
-          <span id="cloudStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#6b7280"></span>
+          <span id="insStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#6b7280"></span>
         </div>
-        <div class="cards conf" id="kpiCards"></div>
-        <div class="tablewrap">
-          <table><thead>
-            <tr><th rowspan="2">NIK</th><th rowspan="2">Nama</th><th rowspan="2">Divisi</th><th rowspan="2">Tipe</th><th rowspan="2">SPV</th><th rowspan="2">Pagu</th>
-            <th class="grp" colspan="5">KPI Positif (%)</th><th class="grp" colspan="3">Penalti</th>
-            <th rowspan="2" class="conf">Point</th><th rowspan="2" class="conf">Pen.</th><th rowspan="2" class="conf">Net</th><th rowspan="2" class="conf">Grade</th><th rowspan="2" class="conf">Insentif</th><th rowspan="2" class="conf">Segmen</th>
-            <th rowspan="2" class="tgt">T.Rp</th><th rowspan="2" class="tgt">T.AO</th><th rowspan="2" class="tgt">T.SKU</th><th rowspan="2" class="tgt">T.NOO</th><th rowspan="2" class="tgt">T.Drop</th><th rowspan="2"></th></tr>
-            <tr><th>Sales</th><th>OA</th><th>NOO</th><th>SKU</th><th>NPD</th><th>Piut.</th><th>Retur</th><th>Telat</th></tr>
-          </thead><tbody id="tbody"></tbody></table>
-        </div>
-        <details><summary>Aturan perhitungan (transparan & dapat dikalibrasi)</summary>
+        <div class="cards" id="insCards"></div>
+        <div class="tablewrap"><table style="min-width:880px"><thead>
+          <tr><th>Usaha</th><th>Cabang</th><th>Bagian</th><th>Nama</th><th>Pagu</th><th>Net/Skor</th><th>Grade</th><th>Insentif</th><th>Tgl TTD</th></tr>
+        </thead><tbody id="insBody"></tbody></table></div>
+        <details><summary>Cara kerja modul INSENTIF</summary>
           <ul>
-            <li>Bobot GT/Mix: Sales 30, OA 20, NOO 25, SKU 10, NPD 15. MT: Sales 70, SKU 30.</li>
-            <li>Penalti: Piutang 0/10/20/30/40 ×30%; Retur ≥1,2→100 / 1–1,2→50 ×20%; Telat 1/2/≥3 →50/80/100 ×10%.</li>
-            <li>Nilai Bersih (Indeks) = Point − Penalti. Insentif = Pagu × Net%. Grade A≥90 … E&lt;60.</li>
-            <li style="color:#a32d2d">Memakai skema berjalan (pagu × net%), tervalidasi 11/11 ke slip Mei 2026.</li>
+            <li>INSENTIF hanya <b>membaca</b> KPI yang sudah ber-<b>TTD</b> di Filing Cabinet (modul Simpan KPI Karyawan), untuk periode terpilih.</li>
+            <li>Distribusi (divisi produk): Insentif = Pagu × Indeks KPI (mesin tervalidasi 11/11). Jabatan & Otomotif/Ekspedisi: Insentif = Pagu × Skor%.</li>
+            <li>Pengisian & tanda tangan dilakukan di Filing Cabinet — di sini tidak bisa diedit (agar tidak dobel).</li>
           </ul>
         </details>
       </div>
@@ -211,7 +201,7 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
           <ul>
             <li>Pilih <b>Usaha → Cabang → Divisi</b>, lalu isi KPI tiap karyawan untuk periode terpilih (bulan/tahun di kanan atas).</li>
             <li><b>IBM-GRUP (Distribusi):</b> KPI lengkap (Sales/OA/NOO/SKU/NPD) → insentif otomatis. <b>OTO-GRUP &amp; EXSPEDISI:</b> isi Nama + Skor KPI manual + Pagu dulu (metrik khusus menyusul).</li>
-            <li>Data KPI di sini menjadi sumber perhitungan insentif.</li>
+            <li>Centang <b>Sudah TTD</b> setelah karyawan menandatangani — hanya yang ber-TTD yang dihitung di modul INSENTIF.</li>
           </ul>
         </details>
       </div>
@@ -272,8 +262,8 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
 /* ---------- MODULES ---------- */
 const MODULES=[
  {id:"dashboard",name:"Dashboard",ic:"📊",status:"aktif",grp:"utama",desc:"Ringkasan & navigasi seluruh modul."},
- {id:"kpi",name:"INSENTIF",ic:"🎯",status:"aktif",grp:"utama",desc:"Hitung insentif otomatis dari KPI per bulan."},
- {id:"kpistore",name:"Simpan KPI Karyawan",ic:"🗄️",status:"aktif",grp:"utama",desc:"Simpan KPI semua karyawan per Usaha/Cabang/Divisi."},
+ {id:"kpi",name:"INSENTIF",ic:"🎯",status:"aktif",grp:"utama",desc:"Baca KPI ber-TTD dari Filing Cabinet & hitung insentif."},
+ {id:"kpistore",name:"Simpan KPI Karyawan",ic:"🗄️",status:"aktif",grp:"utama",desc:"Filing Cabinet: arsip KPI per Usaha/Cabang/Divisi + TTD."},
  {id:"users",name:"Pengguna",ic:"👥",status:"aktif",grp:"utama",desc:"Kelola pengguna & izin admin.",admin:true},
  {id:"master",name:"Master Data Karyawan",ic:"👤",status:"segera",grp:"data",desc:"Profil, NIK, jabatan, divisi, BPJS, rekening, keluarga.",will:["Data lengkap tiap karyawan","Cek anti-fraud (rekening & NIK)","Dasar semua modul lain"]},
  {id:"selfservice",name:"Self-Service Karyawan",ic:"📱",status:"segera",grp:"data",desc:"Karyawan isi data sendiri via HP, HRD validasi.",will:["Form pengisian di HP","Validasi & approval HRD","Data terkunci di master"]},
@@ -288,7 +278,7 @@ const MODULES=[
 ];
 let CURRENT=null;
 let SHOWTGT=false,SHOWVAL=false,LOCKED=false;
-const APP_VER="1.4", APP_DATE="30 Jun 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="1.5", APP_DATE="30 Jun 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 const GRP={data:"tilesSegera",ops:"tilesRencana",komp:"tilesRencana"};
@@ -325,9 +315,8 @@ function go(id){
   document.getElementById("nav-"+id).classList.add("active");
   document.getElementById("viewTitle").textContent=m.name;
   document.getElementById("periodBox").style.display = (id==="kpi"||id==="payroll"||id==="kpistore")?"flex":"none";
-  const _df=document.getElementById("divFab");if(_df)_df.style.display=(id==="kpi")?"block":"none";
   if(id==="dashboard"){document.getElementById("view-dashboard").classList.add("show");buildDash();renderDashCards();}
-  else if(id==="kpi"){document.getElementById("view-kpi").classList.add("show");cloudLoad();}
+  else if(id==="kpi"){document.getElementById("view-kpi").classList.add("show");insLoad();}
   else if(id==="kpistore"){document.getElementById("view-kpistore").classList.add("show");ksInit();}
   else if(id==="payroll"){document.getElementById("view-payroll").classList.add("show");payLoad();}
   else if(id==="users"){document.getElementById("view-users").classList.add("show");usersLoad();}
@@ -362,19 +351,6 @@ function compute(e){const w=WEIGHTS[e.tipe]||WEIGHTS.GT;
   const tp=salesPt(e.sales)*w.sales+oaPt(e.oa)*w.oa+nooPt(e.noo)*w.noo+pctPt(e.sku)*w.sku+pctPt(e.npd)*w.npd;
   const pen=(num(e.piutangPt)||0)*.30+returPt(e.retur)*.20+discPt(e.telat)*.10;
   const net=tp-pen;return{tp:+tp.toFixed(1),pen:+pen.toFixed(1),net:+net.toFixed(1),grade:gradeOf(net),seg:segOf(net),ins:Math.round((num(e.pagu)||0)*net/100)};}
-const SEED=[
- {nik:"BIS-001",nama:"Aditya",div:"Biskuit",tipe:"GT",pagu:2500000,sales:102.27,oa:95.56,noo:3,sku:120,npd:100,piutangPt:30,retur:0.30,telat:2},
- {nik:"BIS-002",nama:"Aldi",div:"Biskuit",tipe:"GT",pagu:2500000,sales:101.53,oa:75.56,noo:3,sku:107.5,npd:100,piutangPt:30,retur:0.10,telat:2},
- {nik:"BIS-003",nama:"Ricat",div:"Biskuit",tipe:"GT",pagu:2500000,sales:107.37,oa:104.62,noo:3,sku:110,npd:100,piutangPt:0,retur:1.80,telat:0},
- {nik:"BIS-004",nama:"Sulistiono",div:"Biskuit",tipe:"GT",pagu:2500000,sales:105.62,oa:98.75,noo:3,sku:117,npd:100,piutangPt:20,retur:0.10,telat:0},
- {nik:"BIS-005",nama:"Titin",div:"Biskuit",tipe:"GT",pagu:2500000,sales:106.76,oa:96.40,noo:3,sku:106,npd:100,piutangPt:30,retur:0.30,telat:1},
- {nik:"BIS-006",nama:"Fidiana",div:"Biskuit",tipe:"Mix",pagu:2500000,sales:114.91,oa:112.50,noo:1,sku:104.84,npd:100,piutangPt:30,retur:1.30,telat:0},
- {nik:"BIS-007",nama:"Hendra",div:"Biskuit",tipe:"MT",pagu:2500000,sales:108.82,oa:"",noo:"",sku:99.33,npd:"",piutangPt:40,retur:0.90,telat:0},
- {nik:"BIS-008",nama:"Marwan",div:"Biskuit",tipe:"MT",pagu:2500000,sales:105.90,oa:"",noo:"",sku:100,npd:"",piutangPt:40,retur:0.90,telat:1},
- {nik:"GAG-001",nama:"Anwar",div:"Gaga",tipe:"GT",pagu:1600000,sales:105.86,oa:100,noo:7,sku:106.67,npd:100,piutangPt:40,retur:0.60,telat:4},
- {nik:"GAG-002",nama:"Beni",div:"Gaga",tipe:"GT",pagu:1600000,sales:100.29,oa:102,noo:6,sku:110,npd:100,piutangPt:40,retur:1.00,telat:0},
- {nik:"GAG-003",nama:"Jenrico",div:"Gaga",tipe:"GT",pagu:1600000,sales:104.52,oa:96.36,noo:6,sku:110,npd:100,piutangPt:30,retur:0.50,telat:1},
-].map(e=>({spv:"Yoji Untoro",...e}));
 let DATA=[];
 /* ---------- SUPABASE (data terpusat) ---------- */
 const SUPA_URL="https://fopzahrmwtfcvmtdgrbd.supabase.co";
@@ -392,92 +368,26 @@ function loadSupa(){return new Promise(res=>{
 const Y=()=>+$("year").value, M=()=>+$("month").value;
 const toNum=v=>(v===""||v==null||isNaN(parseFloat(v)))?null:parseFloat(v);
 const toInt=v=>(v===""||v==null||isNaN(parseInt(v)))?null:parseInt(v);
-function ensureStatus(){if(!document.getElementById("cloudStatus")){const tb=document.querySelector("#view-kpi .toolbar");if(tb){const s=document.createElement("span");s.id="cloudStatus";s.style.cssText="margin-left:auto;align-self:center;font-size:12px;color:#6b7280";tb.appendChild(s);}}}
-function setCloud(t,c){ensureStatus();const el=document.getElementById("cloudStatus");if(el){el.textContent="Cloud: "+t;el.style.color=c||"#6b7280";}}
-async function cloudLoad(){
-  if(!SB)await loadSupa();
-  if(!SB){setCloud("offline — pakai data lokal","#c0392b");loadData();return;}
-  setCloud("memuat…");
-  try{
-    const {data,error}=await SB.from("kpi_entries").select("*").eq("period_year",Y()).eq("period_month",M());
-    if(error)throw error;
-    DATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama,div:d.divisi||"Biskuit",tipe:d.tipe||"GT",spv:d.spv||"Yoji Untoro",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??"",targetRp:d.target_rp??"",targetAo:d.target_ao??"",targetSku:d.target_sku??"",targetNoo:d.target_noo??"",targetDrop:d.target_drop??""}));
-    try{localStorage.setItem(key(),JSON.stringify(DATA));}catch(e){}
-    await loadLock();
-    setCloud("tersinkron","#1d9e75");render();
-  }catch(e){setCloud("offline — pakai data lokal","#c0392b");loadData();}
-}
-let saveTimer=null;
-function cloudSaveDebounced(){saveData();clearTimeout(saveTimer);saveTimer=setTimeout(cloudSave,800);}
-async function cloudSave(){
-  if(LOCKED&&!isAdmin()){setCloud("terkunci — hanya admin","#c0392b");return;}
-  saveData();
-  if(!SB)await loadSupa();
-  if(!SB){setCloud("offline — tersimpan lokal","#c0392b");return;}
-  const recs=DATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>({period_year:Y(),period_month:M(),nik:e.nik||null,nama:e.nama,divisi:e.div,tipe:e.tipe,spv:e.spv,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),target_rp:toNum(e.targetRp),target_ao:toNum(e.targetAo),target_sku:toNum(e.targetSku),target_noo:toNum(e.targetNoo),target_drop:toNum(e.targetDrop)}));
-  if(!recs.length){setCloud("tersinkron","#1d9e75");return;}
-  setCloud("menyimpan…");
-  try{const {error}=await SB.from("kpi_entries").upsert(recs,{onConflict:"period_year,period_month,nama"});if(error)throw error;setCloud("tersimpan ✓","#1d9e75");}
-  catch(e){setCloud("gagal cloud — tersimpan lokal","#c0392b");}
-}
-async function cloudDelete(nama){if(!SB||!nama)return;try{await SB.from("kpi_entries").delete().eq("period_year",Y()).eq("period_month",M()).eq("nama",nama);}catch(e){}}
-async function cloudClear(){if(!SB)await loadSupa();if(!SB)return;try{await SB.from("kpi_entries").delete().eq("period_year",Y()).eq("period_month",M());}catch(e){}}
 const $=id=>document.getElementById(id);
 const MONTHS=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-function key(){return "ibm_kpi_"+$("year").value+"_"+$("month").value;}
 function rupiah(n){return (n||0).toLocaleString("id-ID");}
-function blankRow(){const d=(DIVFILTER!=="Semua")?DIVFILTER:DIVISIONS[0];return{nik:"",nama:"",div:d,tipe:"GT",spv:"Yoji Untoro",pagu:PAGU[d]||2500000,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:"",targetRp:"",targetAo:"",targetSku:"",targetNoo:"",targetDrop:""};}
-function addRow(){DATA.push(blankRow());render();}
-function delRow(i){const nm=DATA[i]&&DATA[i].nama;DATA.splice(i,1);render();saveData();cloudDelete(nm);}
-function loadSeed(){DATA=JSON.parse(JSON.stringify(SEED));render();cloudSave();}
-function clearData(){if(confirm("Kosongkan data periode ini? (termasuk di cloud)")){DATA=[];render();saveData();cloudClear();}}
-function render(){
-  const tb=$("tbody");if(!tb)return;tb.innerHTML="";
-  const ro=(LOCKED&&!isAdmin());const dis=ro?" disabled":"";
-  DATA.forEach((e,i)=>{if(DIVFILTER!=="Semua"&&e.div!==DIVFILTER)return;const r=compute(e);const tr=document.createElement("tr");
-    const inp=(f,cls="")=>`<input class="${cls}" data-i="${i}" data-f="${f}" value="${e[f]??""}"${dis}>`;
-    const sd=`<select data-i="${i}" data-f="div" style="width:104px"${dis}>`+(DIVISIONS.includes(e.div)?"":`<option value="" selected>— pilih divisi —</option>`)+DIVISIONS.map(d=>`<option ${e.div===d?"selected":""}>${d}</option>`).join("")+`</select>`;
-    const st=`<select data-i="${i}" data-f="tipe"${dis}>`+["GT","MT","Mix"].map(t=>`<option ${e.tipe===t?"selected":""}>${t}</option>`).join("")+`</select>`;
-    const sp=`<select data-i="${i}" data-f="piutangPt"${dis}>`+[0,10,20,30,40].map(p=>`<option ${(+e.piutangPt)===p?"selected":""} value="${p}">${p}</option>`).join("")+`</select>`;
-    tr.innerHTML=`<td>${inp("nik","wide")}</td><td class="name">${inp("nama","name")}</td><td>${sd}</td><td>${st}</td><td>${inp("spv","wide")}</td><td>${inp("pagu","wide")}</td>`+
-      `<td>${inp("sales")}</td><td>${inp("oa")}</td><td>${inp("noo")}</td><td>${inp("sku")}</td><td>${inp("npd")}</td><td>${sp}</td><td>${inp("retur")}</td><td>${inp("telat")}</td>`+
-      `<td class="out conf">${r.tp}</td><td class="out conf">${r.pen}</td><td class="out conf">${r.net}</td><td class="conf"><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins conf">${rupiah(r.ins)}</td><td class="seg conf">${r.seg}</td>`+
-      `<td class="tgt">${inp("targetRp","wide")}</td><td class="tgt">${inp("targetAo")}</td><td class="tgt">${inp("targetSku")}</td><td class="tgt">${inp("targetNoo")}</td><td class="tgt">${inp("targetDrop")}</td>`+
-      `<td><button class="del" onclick="delRow(${i})"${dis}>×</button></td>`;
-    tb.appendChild(tr);});
-  applyColVis();updateLockUI();
-  tb.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",ev=>{
-    const i=+ev.target.dataset.i,f=ev.target.dataset.f;DATA[i][f]=ev.target.value;
-    if(f==="div")DATA[i].pagu=PAGU[ev.target.value]||DATA[i].pagu;render();cloudSaveDebounced();}));
-  renderKpiCards();
-}
-function statCards(el,n,totIns,avg,gc){
-  el.innerHTML=card("Jumlah Karyawan",n,"")+card("Total Insentif","Rp "+rupiah(totIns),"")+card("Rata Indeks",avg,"/100")+card("Grade","A:"+gc.A+" B:"+gc.B+" C:"+gc.C+" D:"+gc.D+" E:"+gc.E,"","15px");
-}
-function aggregate(){let totIns=0,sumNet=0,gc={A:0,B:0,C:0,D:0,E:0};DATA.forEach(e=>{const r=compute(e);totIns+=r.ins;sumNet+=r.net;gc[r.grade]++;});return{n:DATA.length,totIns,avg:DATA.length?(sumNet/DATA.length).toFixed(1):"0",gc};}
-function renderKpiCards(){let totIns=0,sumNet=0,gc={A:0,B:0,C:0,D:0,E:0},n=0;DATA.forEach(e=>{if(DIVFILTER!=="Semua"&&e.div!==DIVFILTER)return;const r=compute(e);totIns+=r.ins;sumNet+=r.net;gc[r.grade]++;n++;});statCards($("kpiCards"),n,totIns,n?(sumNet/n).toFixed(1):"0",gc);}
-function applyColVis(){const v=$("view-kpi");if(!v)return;v.classList.toggle("hidetgt",!SHOWTGT);v.classList.toggle("hideconf",!SHOWVAL);}
-function toggleTgt(){SHOWTGT=!SHOWTGT;const b=$("btnTgt");if(b)b.classList.toggle("primary",SHOWTGT);applyColVis();}
-function toggleVal(){if(!isAdmin())return;SHOWVAL=!SHOWVAL;const b=$("btnVal");if(b){b.classList.toggle("primary",SHOWVAL);b.textContent=SHOWVAL?"🙈 Sembunyikan":"👁 Penilaian";}applyColVis();}
-async function loadLock(){LOCKED=false;if(!SB)return;try{const{data}=await SB.from("period_locks").select("locked").eq("period_year",Y()).eq("period_month",M()).maybeSingle();LOCKED=!!(data&&data.locked);}catch(e){}updateLockUI();}
-async function toggleLock(){if(!isAdmin())return;LOCKED=!LOCKED;updateLockUI();render();if(!SB)await loadSupa();try{await SB.from("period_locks").upsert({period_year:Y(),period_month:M(),locked:LOCKED,locked_by:(CURRENT&&CURRENT.username)||null,locked_at:new Date().toISOString()},{onConflict:"period_year,period_month"});}catch(e){}}
-function updateLockUI(){const adm=isAdmin();const bl=$("btnLock");if(bl){bl.style.display=adm?"":"none";bl.textContent=LOCKED?"🔓 Buka Kunci":"🔒 Kunci";bl.classList.toggle("primary",LOCKED);}const bv=$("btnVal");if(bv)bv.style.display=adm?"":"none";const n=$("lockNote");if(n)n.style.display=(LOCKED&&!adm)?"inline":"none";const ro=(LOCKED&&!adm);document.querySelectorAll('#view-kpi [data-edit]').forEach(b=>b.disabled=ro);}
-// ===== MODUL SIMPAN KPI KARYAWAN (per Usaha/Cabang/Divisi) =====
+const MGMT=["KACAB","Manager","Supervisor"];
 const USAHA={
-  "IBM-GRUP":{label:"Distribusi",mode:"full",cabang:{
-     "Bandar Lampung":["UCI BDL","Bisc BDL","Mie Gaga BDL"],
-     "Metro":["UCI Metro","Bisc Metro","Mie Gaga Metro"],
-     "Palembang":["UCI Plb","Coca-Cola Plb","Tropical Plb"]}},
-  "OTO-GRUP":{label:"Otomotif",mode:"simple",cabang:{
-     "Inti Mobil":["Sales","Service","Sparepart"],
-     "ILR":["Sales","Service","Sparepart"],
-     "Wonder Lampung":["Sales","Service","Sparepart"]}},
-  "EXSPEDISI":{label:"Ekspedisi",mode:"simple",cabang:{
-     "Natan Logistic":["Operasional","Admin","Driver"]}}
+  "IBM-GRUP":{label:"Distribusi",cabang:{
+     "Bandar Lampung":["KACAB","Manager","Supervisor","UCI BDL","Bisc BDL","Mie Gaga BDL"],
+     "Metro":["KACAB","Manager","Supervisor","UCI Metro","Bisc Metro","Mie Gaga Metro"],
+     "Palembang":["KACAB","Manager","Supervisor","UCI Plb","Coca-Cola Plb","Tropical Plb"]}},
+  "OTO-GRUP":{label:"Otomotif",cabang:{
+     "Inti Mobil":["KACAB","Manager","Sales","Service","Sparepart"],
+     "ILR":["KACAB","Manager","Sales","Service","Sparepart"],
+     "Wonder Lampung":["KACAB","Manager","Sales","Service","Sparepart"]}},
+  "EXSPEDISI":{label:"Ekspedisi",cabang:{
+     "Natan Logistic":["KACAB","Manager","Operasional","Admin","Driver"]}}
 };
+function isFull(usaha,divisi){return usaha==="IBM-GRUP" && DIVISIONS.includes(divisi);}
 let KSDATA=[];
 function ksStat(t,c){const s=$("ksStatus");if(s){s.textContent=t;s.style.color=c||"#6b7280";}}
-function ksMode(){const u=$("ksUsaha");return u&&USAHA[u.value]?USAHA[u.value].mode:"full";}
+function ksMode(){const u=$("ksUsaha"),d=$("ksDiv");return isFull(u?u.value:"", d?d.value:"")?"full":"simple";}
 function ksInit(){const u=$("ksUsaha");if(!u)return;u.innerHTML=Object.keys(USAHA).map(k=>`<option value="${k}">${k} — ${USAHA[k].label}</option>`).join("");ksUsahaChange();}
 function ksUsahaChange(){const u=$("ksUsaha").value;$("ksCab").innerHTML=Object.keys(USAHA[u].cabang).map(c=>`<option>${c}</option>`).join("");ksCabChange();}
 function ksCabChange(){const u=$("ksUsaha").value,c=$("ksCab").value;$("ksDiv").innerHTML=(USAHA[u].cabang[c]||[]).map(d=>`<option>${d}</option>`).join("");ksLoad();}
@@ -492,57 +402,94 @@ async function ksLoad(){
   try{
     const {data,error}=await SB.from("kpi_store").select("*").eq("period_year",Y()).eq("period_month",M()).eq("usaha",$("ksUsaha").value).eq("cabang",$("ksCab").value).eq("divisi",$("ksDiv").value);
     if(error)throw error;
-    KSDATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama||"",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??"",skor:d.skor??""}));
+    KSDATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama||"",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??"",skor:d.skor??"",ttd:!!d.ttd,ttd_date:d.ttd_date||""}));
     ksStat("tersinkron","#1d9e75");
   }catch(e){ksStat("offline — pastikan tabel 'kpi_store' sudah dibuat","#c0392b");KSDATA=[];}
   ksRender();
 }
-function ksAdd(){KSDATA.push({nik:"",nama:"",pagu:0,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:"",skor:""});ksRender();}
+function ksAdd(){KSDATA.push({nik:"",nama:"",pagu:0,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:"",skor:"",ttd:false,ttd_date:""});ksRender();}
 function ksDel(i){KSDATA.splice(i,1);ksRender();}
+function ksTtd(i,checked){KSDATA[i].ttd=checked;KSDATA[i].ttd_date=checked?(new Date().toISOString().slice(0,10)):"";ksRender();}
 function ksRender(){
   const mode=ksMode();const head=$("ksHead");if(!head)return;
+  const tail=`<th>Net</th><th>Grade</th><th>Insentif</th><th>TTD</th><th>Tgl TTD</th><th></th>`;
   head.innerHTML=(mode==="full")
-    ?`<tr><th>NIK</th><th>Nama</th><th>Pagu</th><th>Sales</th><th>OA</th><th>NOO</th><th>SKU</th><th>NPD</th><th>Piut.</th><th>Retur</th><th>Telat</th><th>Net</th><th>Grade</th><th>Insentif</th><th></th></tr>`
-    :`<tr><th>NIK</th><th>Nama</th><th>Pagu</th><th>Skor KPI</th><th>Grade</th><th>Insentif</th><th></th></tr>`;
+    ?`<tr><th>NIK</th><th>Nama</th><th>Pagu</th><th>Sales</th><th>OA</th><th>NOO</th><th>SKU</th><th>NPD</th><th>Piut.</th><th>Retur</th><th>Telat</th>${tail}</tr>`
+    :`<tr><th>NIK</th><th>Nama</th><th>Pagu</th><th>Skor KPI</th>${tail}</tr>`;
   const body=$("ksBody");body.innerHTML="";
   KSDATA.forEach((e,i)=>{const r=ksIns(e);const tr=document.createElement("tr");
     const inp=(f,cls="")=>`<input class="${cls}" data-i="${i}" data-f="${f}" value="${e[f]??""}">`;
+    const tailCells=`<td class="out">${r.net}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td>`+
+      `<td><input type="checkbox" ${e.ttd?"checked":""} onchange="ksTtd(${i},this.checked)"></td>`+
+      `<td style="font-size:11px;color:#6b7280">${e.ttd_date||"-"}</td>`+
+      `<td><button class="del" onclick="ksDel(${i})">×</button></td>`;
     if(mode==="full"){
       tr.innerHTML=`<td>${inp("nik","wide")}</td><td class="name">${inp("nama","name")}</td><td>${inp("pagu","wide")}</td>`+
-        `<td>${inp("sales")}</td><td>${inp("oa")}</td><td>${inp("noo")}</td><td>${inp("sku")}</td><td>${inp("npd")}</td><td>${inp("piutangPt")}</td><td>${inp("retur")}</td><td>${inp("telat")}</td>`+
-        `<td class="out">${r.net}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td><td><button class="del" onclick="ksDel(${i})">×</button></td>`;
+        `<td>${inp("sales")}</td><td>${inp("oa")}</td><td>${inp("noo")}</td><td>${inp("sku")}</td><td>${inp("npd")}</td><td>${inp("piutangPt")}</td><td>${inp("retur")}</td><td>${inp("telat")}</td>`+tailCells;
     }else{
       tr.innerHTML=`<td>${inp("nik","wide")}</td><td class="name">${inp("nama","name")}</td><td>${inp("pagu","wide")}</td>`+
-        `<td>${inp("skor","wide")}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td><td><button class="del" onclick="ksDel(${i})">×</button></td>`;
+        `<td>${inp("skor","wide")}</td>`+tailCells;
     }
     body.appendChild(tr);});
-  body.querySelectorAll("input").forEach(el=>el.addEventListener("input",ev=>{const i=+ev.target.dataset.i,f=ev.target.dataset.f;KSDATA[i][f]=ev.target.value;ksRender();}));
+  body.querySelectorAll("input[data-f]").forEach(el=>el.addEventListener("input",ev=>{const i=+ev.target.dataset.i,f=ev.target.dataset.f;KSDATA[i][f]=ev.target.value;ksRender();}));
 }
 async function ksSave(){
   if(!SB)await loadSupa();
   if(!SB){ksStat("offline — tidak tersimpan","#c0392b");return;}
   const u=$("ksUsaha").value,c=$("ksCab").value,d=$("ksDiv").value;
-  const recs=KSDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>{const r=ksIns(e);return{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nik:e.nik||null,nama:e.nama,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),skor:toNum(e.skor),insentif:r.ins};});
+  const recs=KSDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>{const r=ksIns(e);return{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nik:e.nik||null,nama:e.nama,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),skor:toNum(e.skor),insentif:r.ins,ttd:!!e.ttd,ttd_date:e.ttd_date||null};});
   if(!recs.length){ksStat("tidak ada data terisi");return;}
   ksStat("menyimpan…");
   try{const {error}=await SB.from("kpi_store").upsert(recs,{onConflict:"period_year,period_month,usaha,cabang,divisi,nama"});if(error)throw error;ksStat("tersimpan ✓","#1d9e75");}
   catch(e){ksStat("gagal — pastikan tabel 'kpi_store' sudah dibuat","#c0392b");}
 }
-function buildDivMenu(){let h='<div class="divm-item" onclick="pickDiv(\'Semua\')" style="padding:8px 10px;border-radius:7px;cursor:pointer;font-weight:bold">★ Semua Divisi</div>';for(const city in DIVGROUPS){h+='<div style="font-size:11px;color:#888;text-transform:uppercase;padding:8px 10px 2px;letter-spacing:.4px">'+city+'</div>';DIVGROUPS[city].forEach(d=>{h+='<div class="divm-item" onclick="pickDiv(\''+d+'\')" style="padding:7px 10px;border-radius:7px;cursor:pointer">'+d+'</div>';});}const m=document.getElementById('divMenu');if(m)m.innerHTML=h;}
-function toggleDivMenu(){const m=document.getElementById('divMenu');if(m)m.style.display=(m.style.display==='none'?'block':'none');}
-function pickDiv(d){DIVFILTER=d;const l=document.getElementById('divFabLabel');if(l)l.textContent=(d==='Semua'?'Semua Divisi':d);const m=document.getElementById('divMenu');if(m)m.style.display='none';render();}
-function renderDashCards(){loadData(true);const a=aggregate();
-  $("dashCards").innerHTML=card("Karyawan (pilot)",a.n,"")+card("Total Insentif "+MONTHS[$("month").value-1],"Rp "+rupiah(a.totIns),"")+card("Rata Indeks",a.avg,"/100")+card("Modul Aktif",""+naktif(),"/ 12");}
+// ===== MODUL INSENTIF (baca + hitung dari Filing Cabinet) =====
+let INSDATA=[];
+function insStat(t,c){const s=$("insStatus");if(s){s.textContent=t;s.style.color=c||"#6b7280";}}
+function insIns(d){
+  if(isFull(d.usaha,d.divisi))return compute({tipe:"GT",pagu:d.pagu,sales:d.sales,oa:d.oa,noo:d.noo,sku:d.sku,npd:d.npd,piutangPt:d.piutang_pt,retur:d.retur,telat:d.telat});
+  const sk=num(d.skor)||0;return{net:+sk.toFixed(1),grade:gradeOf(sk),ins:Math.round((num(d.pagu)||0)*sk/100)};
+}
+async function insLoad(){
+  if(!SB)await loadSupa();
+  if(!SB){insStat("offline — cek koneksi","#c0392b");INSDATA=[];insRender();return;}
+  insStat("memuat…");
+  try{
+    const {data,error}=await SB.from("kpi_store").select("*").eq("period_year",Y()).eq("period_month",M()).eq("ttd",true);
+    if(error)throw error;
+    INSDATA=data||[];
+    insStat("tersinkron — "+INSDATA.length+" KPI ber-TTD","#1d9e75");
+  }catch(e){insStat("offline — pastikan tabel 'kpi_store' sudah dibuat","#c0392b");INSDATA=[];}
+  insRender();
+}
+function insRender(){
+  const uf=$("insUsaha")?$("insUsaha").value:"Semua";
+  const rows=INSDATA.filter(d=>uf==="Semua"||d.usaha===uf);
+  const body=$("insBody");if(!body)return;body.innerHTML="";
+  let tot=0,n=0;
+  rows.forEach(d=>{const r=insIns(d);tot+=r.ins;n++;const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${d.usaha}</td><td>${d.cabang}</td><td>${d.divisi}</td><td class="name">${d.nama}</td><td>${rupiah(d.pagu)}</td><td class="out">${r.net}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td><td style="font-size:11px;color:#6b7280">${d.ttd_date||"-"}</td>`;
+    body.appendChild(tr);});
+  if(!rows.length)body.innerHTML='<tr><td colspan="9" style="color:#6b7280;text-align:left;padding:12px">Belum ada KPI ber-TTD pada periode ini. Isi & centang "Sudah TTD" di modul Simpan KPI Karyawan.</td></tr>';
+  const ic=$("insCards");if(ic)ic.innerHTML=card("Karyawan ber-TTD",n,"")+card("Total Insentif "+MONTHS[$("month").value-1],"Rp "+rupiah(tot),"");
+}
+function insCSV(){const uf=$("insUsaha")?$("insUsaha").value:"Semua";const rows=INSDATA.filter(d=>uf==="Semua"||d.usaha===uf);
+  const head=["Usaha","Cabang","Bagian","Nama","Pagu","NetSkor","Grade","Insentif","TglTTD"];
+  const out=rows.map(d=>{const r=insIns(d);return[d.usaha,d.cabang,d.divisi,d.nama,d.pagu,r.net,r.grade,r.ins,d.ttd_date||""];});
+  const csv=[head,...out].map(r=>r.map(c=>`"${c??""}"`).join(",")).join("\n");
+  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="Insentif_"+MONTHS[$("month").value-1]+"_"+$("year").value+".csv";a.click();}
+function renderDashCards(){_renderDashCards();}
+async function _renderDashCards(){
+  const dc=$("dashCards");if(dc&&!dc.innerHTML)dc.innerHTML=card("Karyawan ber-TTD","…","")+card("Total Insentif "+MONTHS[$("month").value-1],"…","")+card("Modul Aktif",""+naktif(),"/ 12");
+  let n=0,tot=0;
+  if(!SB)await loadSupa();
+  if(SB){try{const {data}=await SB.from("kpi_store").select("*").eq("period_year",Y()).eq("period_month",M()).eq("ttd",true);
+    (data||[]).forEach(d=>{tot+=(d.insentif!=null?d.insentif:insIns(d).ins);n++;});}catch(e){}}
+  if(dc)dc.innerHTML=card("Karyawan ber-TTD",n,"")+card("Total Insentif "+MONTHS[$("month").value-1],"Rp "+rupiah(tot),"")+card("Modul Aktif",""+naktif(),"/ 12");}
 function card(l,v,s,fs){return `<div class="card"><div class="lbl">${l}</div><div class="val" ${fs?`style="font-size:${fs}"`:""}>${v} <small>${s||""}</small></div></div>`;}
-function saveData(){try{localStorage.setItem(key(),JSON.stringify(DATA));}catch(e){}}
-function loadData(silent){try{const d=localStorage.getItem(key());DATA=d?JSON.parse(d):[];}catch(e){DATA=[];}if(!silent)render();}
-function exportCSV(){const head=["NIK","Nama","Divisi","Tipe","SPV","Pagu","Sales","OA","NOO","SKU","NPD","PiutangPt","Retur","Telat","Point","Penalti","Net","Grade","Insentif","Segmen"];
-  const rows=DATA.map(e=>{const r=compute(e);return[e.nik,e.nama,e.div,e.tipe,e.spv,e.pagu,e.sales,e.oa,e.noo,e.sku,e.npd,e.piutangPt,e.retur,e.telat,r.tp,r.pen,r.net,r.grade,r.ins,r.seg];});
-  const csv=[head,...rows].map(r=>r.map(c=>`"${c??""}"`).join(",")).join("\n");
-  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="KPI_"+MONTHS[$("month").value-1]+"_"+$("year").value+".csv";a.click();}
 function initPeriod(){const m=$("month"),y=$("year");MONTHS.forEach((nm,i)=>{const o=document.createElement("option");o.value=i+1;o.textContent=nm;m.appendChild(o);});
   for(let yy=2026;yy<=2028;yy++){const o=document.createElement("option");o.value=yy;o.textContent=yy;y.appendChild(o);}m.value=7;y.value=2026;
-  m.onchange=y.onchange=()=>{if(ACTIVE==="kpi"){cloudLoad();}else if(ACTIVE==="payroll"){payLoad();}renderDashCards();};}
+  m.onchange=y.onchange=()=>{if(ACTIVE==="kpi"){insLoad();}else if(ACTIVE==="payroll"){payLoad();}else if(ACTIVE==="kpistore"){ksLoad();}renderDashCards();};}
 /* ---------- PAYROLL ---------- */
 let PAY=[];
 const NPN=v=>{v=parseFloat(v);return isNaN(v)?0:v;};
@@ -560,15 +507,10 @@ function payDel(i){PAY.splice(i,1);renderPay();paySave();}
 function paySave(){try{localStorage.setItem(payKey(),JSON.stringify(PAY));}catch(e){}}
 function payLoad(silent){
   try{const d=localStorage.getItem(payKey());PAY=d?JSON.parse(d):[];}catch(e){PAY=[];}
-  if(PAY.length===0){PAY=SEED.map(e=>({nik:e.nik,nama:e.nama,pokok:0,transport:0,makan:0,jabatan:0,lembur:0,insentif:0,pph21:0}));}
   if(!silent)renderPay();
 }
 function payPull(){
-  let map={};
-  try{const d=localStorage.getItem("ibm_kpi_"+$("year").value+"_"+$("month").value);if(d){JSON.parse(d).forEach(e=>{map[e.nama]=compute(e).ins;});}}catch(e){}
-  let cnt=0;PAY.forEach(p=>{if(map[p.nama]!=null){p.insentif=map[p.nama];cnt++;}});
-  renderPay();paySave();
-  alert(cnt?("Insentif KPI "+MONTHS[$("month").value-1]+" ditarik untuk "+cnt+" karyawan."):"Belum ada data KPI di periode ini. Buka modul KPI & Insentif, isi data, lalu coba lagi.");
+  alert("Tarik insentif dari modul INSENTIF akan disambungkan otomatis pada versi berikutnya.");
 }
 function renderPay(){
   const tb=$("payBody");if(!tb)return;tb.innerHTML="";
@@ -667,8 +609,8 @@ function showApp(){
   document.getElementById('authScreen').style.display='none';
   document.getElementById('appRoot').style.display='flex';
   const w=document.getElementById('whoami');if(w)w.textContent=CURRENT.username+' · '+(CURRENT.role==='admin'?'Admin':'Pengguna');
-  buildNav();buildDivMenu();go('dashboard');
-  const DEF=['240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9','74b8544b3e0a87d17a43e30788261671ac3bc28ef3352a38 ac6aa8176a0e96e7'];
+  buildNav();go('dashboard');
+  const DEF=['240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9','74b8544b3e0a87d17a43e30788261671ac3bc28ef3352a38ac6aa8176a0e96e7'];
   if(DEF.indexOf(CURRENT.password_hash)>=0){setTimeout(function(){alert('Demi keamanan, segera ganti password Anda lewat tombol "Ganti Password" di kanan atas.');},600);}
 }
 function cpMsg(t,c){const e=document.getElementById('cpMsg');if(e){e.textContent=t;e.style.color=c||'#c0392b';}}
@@ -688,7 +630,7 @@ async function doChangePw(){
     CURRENT.password_hash=hNew;cpMsg('Password berhasil diganti!','#1d9e75');setTimeout(closeChangePw,1200);
   }catch(e){cpMsg('Gagal menyimpan. Coba lagi.');}
 }
-function logout(){localStorage.removeItem('hig_user');CURRENT=null;document.getElementById('appRoot').style.display='none';document.getElementById('authScreen').style.display='flex';authTab('login');const ap=document.getElementById('au_pass');if(ap)ap.value='';const _df=document.getElementById('divFab');if(_df)_df.style.display='none';}
+function logout(){localStorage.removeItem('hig_user');CURRENT=null;document.getElementById('appRoot').style.display='none';document.getElementById('authScreen').style.display='flex';authTab('login');const ap=document.getElementById('au_pass');if(ap)ap.value='';}
 async function checkSession(){
   const raw=localStorage.getItem('hig_user');if(!raw)return;
   try{const saved=JSON.parse(raw);if(!SB)await loadSupa();if(!SB)return;
