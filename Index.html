@@ -10,7 +10,6 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}
 .app{display:flex;min-height:100vh}
-/* sidebar */
 .side{width:268px;background:var(--navy);color:#cdd8ea;flex-shrink:0;display:flex;flex-direction:column}
 .side .brand{padding:16px 18px;border-bottom:1px solid #2b4470}
 .side .brand b{color:#fff;font-size:16px;letter-spacing:.5px}
@@ -26,7 +25,6 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background
 .side a .st{margin-left:6px;align-self:flex-start;font-size:9px;padding:1px 6px;border-radius:8px;flex-shrink:0}
 .st-aktif{background:#1d9e75;color:#fff}.st-segera{background:#ba7517;color:#fff}.st-rencana{background:#3a527e;color:#cdd8ea}
 .side .foot{margin-top:auto;padding:12px 18px;font-size:10px;color:#7e93ba;border-top:1px solid #2b4470}
-/* main */
 .main{flex:1;min-width:0;display:flex;flex-direction:column}
 .top{background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;display:flex;align-items:center;gap:14px}
 .menubtn{background:none;border:1px solid var(--line);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(--navy)}
@@ -38,7 +36,6 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background
 .top select,.top input{font-family:inherit;font-size:13px;padding:4px 6px;border-radius:6px;border:1px solid #cfd6e2}
 .content{padding:20px 22px 60px}
 .view{display:none}.view.show{display:block}
-/* dashboard */
 .hello{font-size:20px;font-weight:bold;color:var(--navy);margin:0 0 2px}
 .hello+.p{color:var(--muted);margin:0 0 16px;font-size:13px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
@@ -56,7 +53,6 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background
 .tile p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
 .tile .badge{position:absolute;top:12px;right:12px;font-size:9px;padding:2px 7px;border-radius:8px;font-weight:bold}
 .b-aktif{background:#e2efe9;color:#0f6e56}.b-segera{background:#f7ecd6;color:#8a5a00}.b-rencana{background:#eef1f6;color:#6b7280}
-/* toolbar + table (KPI) */
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
 button{font-family:inherit;font-size:13px;padding:8px 12px;border-radius:7px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
 button:hover{background:#eef2f8}
@@ -68,19 +64,12 @@ th{background:var(--navy);color:#fff;font-size:11px;position:sticky;top:0;z-inde
 td.name{text-align:left}td input,td select{font-family:inherit;font-size:13px;width:60px;padding:4px;border:1px solid #cfd6e2;border-radius:5px;text-align:center;background:#eaf1fb}
 td input.name{width:88px;text-align:left;background:#fff;font-weight:bold}td input.wide{width:78px}
 td.out{font-weight:bold;background:#eef5ee}
-.hidetgt .tgt{display:none}.hideconf .conf{display:none}
-th.tgt{background:#7a5b1e}td.tgt input{background:#fff7e6}
-td.tgt,th.tgt{border-left:2px solid #d8b24a}
-input:disabled,select:disabled{background:#eef0f3 !important;color:#9aa1ad;cursor:not-allowed}
-button:disabled{opacity:.45;cursor:not-allowed}
 .badge2{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:bold;color:#fff}
 .gA{background:var(--green)}.gB{background:var(--teal)}.gC{background:var(--amber)}.gD{background:var(--orange)}.gE{background:var(--red)}
 .ins{font-weight:bold;color:var(--navy)}.del{color:var(--red);cursor:pointer;border:none;background:none;font-size:15px}.seg{font-size:11px;color:var(--muted)}
 tbody tr:nth-child(even){background:#f7f9fc}
-.note{background:#fff8e6;border:1px solid #f0d98a;border-radius:9px;padding:10px 14px;font-size:12.5px;color:#6b5400;margin:14px 0}
 details{background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin:12px 0;font-size:13px}
 summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
-/* placeholder */
 .ph{background:#fff;border:1px dashed #c3ccda;border-radius:12px;padding:30px;text-align:center;max-width:640px}
 .ph .ic{font-size:40px}.ph h2{color:var(--navy);margin:10px 0 6px}.ph p{color:var(--muted);max-width:480px;margin:6px auto}
 .ph .will{text-align:left;display:inline-block;margin:14px auto 0;color:#444;font-size:13px;line-height:1.7}
@@ -98,7 +87,6 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
 .authmsg{font-size:12.5px;margin-top:10px;text-align:center;min-height:16px}
 .userchip{font-size:12px;color:var(--muted)}
 .logoutbtn{font-size:12px;padding:5px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;cursor:pointer;margin-left:8px}
-.divm-item:hover{background:#f0f3f8}
 </style>
 </head>
 <body>
@@ -144,7 +132,6 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
       <button class="logoutbtn" onclick="logout()">Keluar</button>
     </div>
     <div class="content">
-      <!-- DASHBOARD -->
       <div class="view show" id="view-dashboard">
         <p class="hello">Selamat datang, Pak Tjen 👋</p>
         <p class="p">Ringkasan sistem HR IBM Group. Klik modul mana pun di bawah untuk membukanya.</p>
@@ -156,7 +143,6 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
         <div class="sec-title">Direncanakan</div>
         <div class="tiles" id="tilesRencana"></div>
       </div>
-      <!-- INSENTIF (baca + hitung dari Filing Cabinet) -->
       <div class="view" id="view-kpi">
         <div class="toolbar">
           <button class="primary" onclick="insLoad()">↻ Muat dari Filing Cabinet</button>
@@ -177,35 +163,33 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
         </thead><tbody id="insBody"></tbody></table></div>
         <details><summary>Cara kerja modul INSENTIF</summary>
           <ul>
-            <li>INSENTIF hanya <b>membaca</b> KPI yang sudah ber-<b>TTD</b> di Filing Cabinet (modul Simpan KPI Karyawan), untuk periode terpilih.</li>
-            <li>Distribusi (divisi produk): Insentif = Pagu × Indeks KPI (mesin tervalidasi 11/11). Jabatan & Otomotif/Ekspedisi: Insentif = Pagu × Skor%.</li>
-            <li>Pengisian & tanda tangan dilakukan di Filing Cabinet — di sini tidak bisa diedit (agar tidak dobel).</li>
+            <li>INSENTIF hanya <b>membaca</b> KPI yang sudah ber-<b>TTD</b> di Filing Cabinet, untuk periode terpilih.</li>
+            <li>Distribusi (divisi produk): Insentif = Pagu × Indeks KPI. KACAB: insentif bertingkat dari Nilai 5 Pilar. Lainnya: Pagu × Skor%.</li>
+            <li>Pengisian & TTD dilakukan di Filing Cabinet — di sini tidak bisa diedit.</li>
           </ul>
         </details>
       </div>
-      <!-- SIMPAN KPI KARYAWAN -->
       <div class="view" id="view-kpistore">
         <div class="toolbar">
           <label style="align-self:center;font-size:13px;font-weight:bold">Usaha:</label>
           <select id="ksUsaha" onchange="ksUsahaChange()" style="font-weight:bold"></select>
           <label style="align-self:center;font-size:13px;font-weight:bold">Cabang:</label>
           <select id="ksCab" onchange="ksCabChange()"></select>
-          <label style="align-self:center;font-size:13px;font-weight:bold">Divisi:</label>
+          <label style="align-self:center;font-size:13px;font-weight:bold">Divisi/Jabatan:</label>
           <select id="ksDiv" onchange="ksLoad()"></select>
           <button class="primary" onclick="ksAdd()">+ Tambah</button>
           <button onclick="ksSave()">💾 Save</button>
           <span id="ksStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#6b7280"></span>
         </div>
         <div class="tablewrap"><table style="min-width:700px"><thead id="ksHead"></thead><tbody id="ksBody"></tbody></table></div>
-        <details><summary>Tentang Modul Simpan KPI Karyawan</summary>
+        <details><summary>Tentang Modul Simpan KPI Karyawan (Filing Cabinet)</summary>
           <ul>
-            <li>Pilih <b>Usaha → Cabang → Divisi</b>, lalu isi KPI tiap karyawan untuk periode terpilih (bulan/tahun di kanan atas).</li>
-            <li><b>IBM-GRUP (Distribusi):</b> KPI lengkap (Sales/OA/NOO/SKU/NPD) → insentif otomatis. <b>OTO-GRUP &amp; EXSPEDISI:</b> isi Nama + Skor KPI manual + Pagu dulu (metrik khusus menyusul).</li>
+            <li>Pilih <b>Usaha → Cabang → Divisi/Jabatan</b>, lalu isi KPI untuk periode terpilih.</li>
+            <li><b>KACAB:</b> form KPI 5 Pilar (15 indikator) → skor & insentif otomatis. <b>Distribusi (divisi produk):</b> KPI lengkap. <b>Lainnya:</b> Skor KPI manual + Pagu.</li>
             <li>Centang <b>Sudah TTD</b> setelah karyawan menandatangani — hanya yang ber-TTD yang dihitung di modul INSENTIF.</li>
           </ul>
         </details>
       </div>
-      <!-- PAYROLL -->
       <div class="view" id="view-payroll">
         <div class="toolbar">
           <button class="primary" onclick="payAdd()">+ Tambah Karyawan</button>
@@ -226,21 +210,18 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
         <details><summary>Aturan payroll (sesuai PP 36/2021 & BPJS)</summary>
           <ul>
             <li>Gaji Kotor = Pokok + Transport + Makan + Jabatan + Lembur + Insentif KPI.</li>
-            <li>Potongan BPJS karyawan: JHT 2%, Jaminan Pensiun 1%, Kesehatan 1% — basis = Pokok + Tunjangan Jabatan (Kesehatan dibatasi basis Rp 12.000.000).</li>
-            <li>PPh21 diisi manual untuk sementara (metode TER 2024 menyusul). Tapera 2,5% belum diaktifkan (berlaku 2027).</li>
-            <li>Gaji Bersih = Gaji Kotor − (Total BPJS + PPh21). Insentif KPI ditarik otomatis dari modul KPI periode yang sama.</li>
+            <li>Potongan BPJS karyawan: JHT 2%, JP 1%, Kesehatan 1% — basis = Pokok + Tunjangan Jabatan (Kesehatan dibatasi Rp 12.000.000).</li>
+            <li>PPh21 manual sementara. Gaji Bersih = Gaji Kotor − (Total BPJS + PPh21).</li>
           </ul>
         </details>
       </div>
-      <!-- PENGGUNA (admin) -->
       <div class="view" id="view-users">
         <div class="toolbar"><button class="primary" onclick="usersLoad()">↻ Muat Ulang</button></div>
         <div class="tablewrap"><table><thead>
           <tr><th>Username</th><th>Email</th><th>Peran</th><th>Status</th><th>Aksi</th></tr>
         </thead><tbody id="usersBody"></tbody></table></div>
-        <p style="font-size:12px;color:var(--muted);margin-top:10px">Hanya admin yang dapat membuka menu ini. Setujui pengguna baru agar bisa login; beri atau cabut izin admin sesuai kebutuhan.</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:10px">Hanya admin yang dapat membuka menu ini. Setujui pengguna baru agar bisa login; beri/cabut izin admin sesuai kebutuhan.</p>
       </div>
-      <!-- PLACEHOLDER -->
       <div class="view" id="view-ph"><div class="ph" id="phInner"></div></div>
     </div>
   </div>
@@ -259,7 +240,6 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
   </div>
 </div>
 <script>
-/* ---------- MODULES ---------- */
 const MODULES=[
  {id:"dashboard",name:"Dashboard",ic:"📊",status:"aktif",grp:"utama",desc:"Ringkasan & navigasi seluruh modul."},
  {id:"kpi",name:"INSENTIF",ic:"🎯",status:"aktif",grp:"utama",desc:"Baca KPI ber-TTD dari Filing Cabinet & hitung insentif."},
@@ -277,11 +257,9 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-let SHOWTGT=false,SHOWVAL=false,LOCKED=false;
-const APP_VER="1.5", APP_DATE="30 Jun 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="1.6", APP_DATE="30 Jun 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
-const GRP={data:"tilesSegera",ops:"tilesRencana",komp:"tilesRencana"};
 function buildNav(){
   const groups={utama:"Utama",data:"Data & Karyawan",ops:"Operasional HR",komp:"Kompensasi & Dokumen"};
   const nav=document.getElementById("nav");let html="";
@@ -331,13 +309,9 @@ function go(id){
   }
   window.scrollTo(0,0);
 }
-
-/* ---------- KPI ENGINE (tervalidasi 11/11) ---------- */
 const WEIGHTS={GT:{sales:.30,oa:.20,noo:.25,sku:.10,npd:.15},Mix:{sales:.30,oa:.20,noo:.25,sku:.10,npd:.15},MT:{sales:.70,oa:0,noo:0,sku:.30,npd:0}};
 const DIVGROUPS={"Bandar Lampung":["UCI BDL","Bisc BDL","Mie Gaga BDL"],"Metro":["UCI Metro","Bisc Metro","Mie Gaga Metro"],"Palembang":["UCI Plb","Coca-Cola Plb","Tropical Plb"]};
 const DIVISIONS=["UCI BDL","Bisc BDL","Mie Gaga BDL","UCI Metro","Bisc Metro","Mie Gaga Metro","UCI Plb","Coca-Cola Plb","Tropical Plb"];
-const PAGU={"UCI BDL":1500000,"Bisc BDL":2500000,"Mie Gaga BDL":1600000,"UCI Metro":1500000,"Bisc Metro":2500000,"Mie Gaga Metro":1600000,"UCI Plb":1500000,"Coca-Cola Plb":2000000,"Tropical Plb":2000000};
-let DIVFILTER="Semua";
 const num=v=>v===""||v==null||isNaN(parseFloat(v))?null:parseFloat(v);
 const salesPt=a=>{a=num(a);if(a==null)return 0;if(a>=100)return 100;if(a>=95)return 90;if(a>=90)return 80;return 0;};
 const oaPt=a=>{a=num(a);if(a==null)return 0;if(a>100)return 100;if(a>=95)return 70;return 0;};
@@ -351,8 +325,7 @@ function compute(e){const w=WEIGHTS[e.tipe]||WEIGHTS.GT;
   const tp=salesPt(e.sales)*w.sales+oaPt(e.oa)*w.oa+nooPt(e.noo)*w.noo+pctPt(e.sku)*w.sku+pctPt(e.npd)*w.npd;
   const pen=(num(e.piutangPt)||0)*.30+returPt(e.retur)*.20+discPt(e.telat)*.10;
   const net=tp-pen;return{tp:+tp.toFixed(1),pen:+pen.toFixed(1),net:+net.toFixed(1),grade:gradeOf(net),seg:segOf(net),ins:Math.round((num(e.pagu)||0)*net/100)};}
-let DATA=[];
-/* ---------- SUPABASE (data terpusat) ---------- */
+/* ---------- SUPABASE ---------- */
 const SUPA_URL="https://fopzahrmwtfcvmtdgrbd.supabase.co";
 const SUPA_KEY="sb_publishable_ClJbZIYz7aCXgD1XYdgGnw_ep5K1A-d";
 let SB=null;
@@ -385,9 +358,31 @@ const USAHA={
      "Natan Logistic":["KACAB","Manager","Operasional","Admin","Driver"]}}
 };
 function isFull(usaha,divisi){return usaha==="IBM-GRUP" && DIVISIONS.includes(divisi);}
+/* ===== SKEMA KPI KACAB — 5 Pilar (sesuai dokumen v3) ===== */
+const SCHEME_KACAB=[
+  {p:"I. Sales Achievement (35%)",c:"1.1",n:"Volume Karton vs Target",w:12},
+  {p:"I. Sales Achievement (35%)",c:"1.2",n:"Omset Rupiah vs Target",w:10},
+  {p:"I. Sales Achievement (35%)",c:"1.3",n:"Outlet Aktif / Effective Call",w:8},
+  {p:"I. Sales Achievement (35%)",c:"1.4",n:"SKU Sold & Product Mix",w:5},
+  {p:"II. Collection & Piutang (30%)",c:"2.1",n:"Collection Rate",w:14},
+  {p:"II. Collection & Piutang (30%)",c:"2.2",n:"Overdue Piutang",w:10},
+  {p:"II. Collection & Piutang (30%)",c:"2.3",n:"DSO (Days Sales Outstanding)",w:4},
+  {p:"II. Collection & Piutang (30%)",c:"2.4",n:"Bad Debt / Piutang Macet Baru",w:2},
+  {p:"III. Pengendalian Stok (15%)",c:"3.1",n:"Stok Tidak Under (OOS)",w:6},
+  {p:"III. Pengendalian Stok (15%)",c:"3.2",n:"Stok Tidak Over (Dead Stock)",w:5},
+  {p:"III. Pengendalian Stok (15%)",c:"3.3",n:"Near Expired (ED < 90 hari)",w:4},
+  {p:"IV. Efisiensi Biaya (10%)",c:"4.1",n:"Biaya Operasional vs Budget",w:6},
+  {p:"IV. Efisiensi Biaya (10%)",c:"4.2",n:"Gross Profit / Laba Cabang",w:4},
+  {p:"V. Audit & Kepatuhan SOP (10%)",c:"5.1",n:"Audit Score Internal",w:6},
+  {p:"V. Audit & Kepatuhan SOP (10%)",c:"5.2",n:"Ketepatan Pelaporan ke Direksi",w:4}
+];
+function bandScore(ach){ach=num(ach);if(ach==null)return 0;if(ach>=110)return 110;if(ach>=100)return 100;if(ach>=90)return 85;if(ach>=80)return 70;if(ach>=70)return 55;return 40;}
+function kacabNilai(ach){let s=0;SCHEME_KACAB.forEach(it=>{s+=bandScore(ach&&ach[it.c])*it.w/100;});return +s.toFixed(1);}
+function kacabIns(n){return n>=90?2000000:n>=80?1000000:n>=70?300000:0;}
+function kacabPred(n){return n>=90?"Sangat Baik":n>=80?"Baik":n>=70?"Cukup":n>=60?"Kurang":"Sangat Kurang";}
 let KSDATA=[];
 function ksStat(t,c){const s=$("ksStatus");if(s){s.textContent=t;s.style.color=c||"#6b7280";}}
-function ksMode(){const u=$("ksUsaha"),d=$("ksDiv");return isFull(u?u.value:"", d?d.value:"")?"full":"simple";}
+function ksMode(){const u=$("ksUsaha"),d=$("ksDiv");const dv=d?d.value:"";if(dv==="KACAB")return"kacab";return isFull(u?u.value:"", dv)?"full":"simple";}
 function ksInit(){const u=$("ksUsaha");if(!u)return;u.innerHTML=Object.keys(USAHA).map(k=>`<option value="${k}">${k} — ${USAHA[k].label}</option>`).join("");ksUsahaChange();}
 function ksUsahaChange(){const u=$("ksUsaha").value;$("ksCab").innerHTML=Object.keys(USAHA[u].cabang).map(c=>`<option>${c}</option>`).join("");ksCabChange();}
 function ksCabChange(){const u=$("ksUsaha").value,c=$("ksCab").value;$("ksDiv").innerHTML=(USAHA[u].cabang[c]||[]).map(d=>`<option>${d}</option>`).join("");ksLoad();}
@@ -402,16 +397,18 @@ async function ksLoad(){
   try{
     const {data,error}=await SB.from("kpi_store").select("*").eq("period_year",Y()).eq("period_month",M()).eq("usaha",$("ksUsaha").value).eq("cabang",$("ksCab").value).eq("divisi",$("ksDiv").value);
     if(error)throw error;
-    KSDATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama||"",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??"",skor:d.skor??"",ttd:!!d.ttd,ttd_date:d.ttd_date||""}));
+    if(ksMode()==="kacab"){const d0=(data||[])[0];KSDATA=[{nama:d0?d0.nama:"",ach:(d0&&d0.detail)||{},ttd:!!(d0&&d0.ttd),ttd_date:(d0&&d0.ttd_date)||""}];}
+    else KSDATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama||"",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??"",skor:d.skor??"",ttd:!!d.ttd,ttd_date:d.ttd_date||""}));
     ksStat("tersinkron","#1d9e75");
   }catch(e){ksStat("offline — pastikan tabel 'kpi_store' sudah dibuat","#c0392b");KSDATA=[];}
   ksRender();
 }
-function ksAdd(){KSDATA.push({nik:"",nama:"",pagu:0,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:"",skor:"",ttd:false,ttd_date:""});ksRender();}
+function ksAdd(){if(ksMode()==="kacab"){if(!KSDATA.length)KSDATA=[{nama:"",ach:{},ttd:false,ttd_date:""}];ksRender();return;}KSDATA.push({nik:"",nama:"",pagu:0,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:"",skor:"",ttd:false,ttd_date:""});ksRender();}
 function ksDel(i){KSDATA.splice(i,1);ksRender();}
 function ksTtd(i,checked){KSDATA[i].ttd=checked;KSDATA[i].ttd_date=checked?(new Date().toISOString().slice(0,10)):"";ksRender();}
 function ksRender(){
   const mode=ksMode();const head=$("ksHead");if(!head)return;
+  if(mode==="kacab"){ksRenderKacab();return;}
   const tail=`<th>Net</th><th>Grade</th><th>Insentif</th><th>TTD</th><th>Tgl TTD</th><th></th>`;
   head.innerHTML=(mode==="full")
     ?`<tr><th>NIK</th><th>Nama</th><th>Pagu</th><th>Sales</th><th>OA</th><th>NOO</th><th>SKU</th><th>NPD</th><th>Piut.</th><th>Retur</th><th>Telat</th>${tail}</tr>`
@@ -433,20 +430,44 @@ function ksRender(){
     body.appendChild(tr);});
   body.querySelectorAll("input[data-f]").forEach(el=>el.addEventListener("input",ev=>{const i=+ev.target.dataset.i,f=ev.target.dataset.f;KSDATA[i][f]=ev.target.value;ksRender();}));
 }
+function ksRenderKacab(){
+  if(!KSDATA.length)KSDATA=[{nama:"",ach:{},ttd:false,ttd_date:""}];
+  const e=KSDATA[0];const ach=e.ach||(e.ach={});
+  const nilai=kacabNilai(ach),pred=kacabPred(nilai),ins=kacabIns(nilai);
+  $("ksHead").innerHTML=`<tr><th>Pilar</th><th style="text-align:left">Indikator</th><th>Bobot</th><th>Capaian %</th><th>Skor 0–110</th><th>Nilai (×bobot)</th></tr>`;
+  let rows=`<tr style="background:#eef2f8"><td colspan="6" style="text-align:left;padding:8px"><b>Nama Kepala Cabang:</b> <input id="kskNama" value="${e.nama||""}" style="width:210px;text-align:left"> &nbsp;·&nbsp; Periode ${MONTHS[M()-1]} ${Y()}</td></tr>`;
+  let lastP="";
+  SCHEME_KACAB.forEach(it=>{const sc=bandScore(ach[it.c]);const pcell=(it.p!==lastP)?`<td style="font-size:10px;color:#1F3864;font-weight:bold;text-align:left">${it.p}</td>`:`<td></td>`;lastP=it.p;
+    rows+=`<tr>${pcell}<td style="text-align:left">${it.c} ${it.n}</td><td>${it.w}%</td><td><input class="wide" data-ach="${it.c}" value="${ach[it.c]??""}"></td><td class="out">${sc}</td><td class="out">${(sc*it.w/100).toFixed(2)}</td></tr>`;});
+  rows+=`<tr style="background:#eef5ee;font-weight:bold"><td colspan="3" style="text-align:right">NILAI AKHIR →</td><td>—</td><td>—</td><td class="out" style="font-size:15px">${nilai}</td></tr>`;
+  rows+=`<tr style="background:#fff8e6;font-weight:bold"><td colspan="3" style="text-align:right">Predikat / Insentif →</td><td colspan="3" style="text-align:left"><span class="badge2 g${nilai>=90?'A':nilai>=80?'B':nilai>=70?'C':nilai>=60?'D':'E'}">${pred}</span> &nbsp; <span class="ins">Rp ${rupiah(ins)}</span></td></tr>`;
+  rows+=`<tr><td colspan="3" style="text-align:right">Sudah TTD?</td><td><input type="checkbox" ${e.ttd?"checked":""} onchange="ksTtd(0,this.checked)"></td><td colspan="2" style="text-align:left;font-size:11px;color:#6b7280">${e.ttd_date||"-"}</td></tr>`;
+  $("ksBody").innerHTML=rows;
+  const nm=$("kskNama");if(nm)nm.addEventListener("change",ev=>{KSDATA[0].nama=ev.target.value;});
+  $("ksBody").querySelectorAll("input[data-ach]").forEach(el=>el.addEventListener("change",ev=>{KSDATA[0].ach[ev.target.dataset.ach]=ev.target.value;ksRenderKacab();}));
+}
 async function ksSave(){
   if(!SB)await loadSupa();
   if(!SB){ksStat("offline — tidak tersimpan","#c0392b");return;}
   const u=$("ksUsaha").value,c=$("ksCab").value,d=$("ksDiv").value;
-  const recs=KSDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>{const r=ksIns(e);return{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nik:e.nik||null,nama:e.nama,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),skor:toNum(e.skor),insentif:r.ins,ttd:!!e.ttd,ttd_date:e.ttd_date||null};});
+  let recs;
+  if(ksMode()==="kacab"){
+    const e=KSDATA[0]||{};if(!e.nama||!(""+e.nama).trim()){ksStat("isi Nama Kepala Cabang dulu","#c0392b");return;}
+    const nilai=kacabNilai(e.ach);
+    recs=[{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nama:e.nama,pagu:0,skor:nilai,insentif:kacabIns(nilai),detail:e.ach||{},ttd:!!e.ttd,ttd_date:e.ttd_date||null}];
+  }else{
+    recs=KSDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>{const r=ksIns(e);return{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nik:e.nik||null,nama:e.nama,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),skor:toNum(e.skor),insentif:r.ins,ttd:!!e.ttd,ttd_date:e.ttd_date||null};});
+  }
   if(!recs.length){ksStat("tidak ada data terisi");return;}
   ksStat("menyimpan…");
   try{const {error}=await SB.from("kpi_store").upsert(recs,{onConflict:"period_year,period_month,usaha,cabang,divisi,nama"});if(error)throw error;ksStat("tersimpan ✓","#1d9e75");}
-  catch(e){ksStat("gagal — pastikan tabel 'kpi_store' sudah dibuat","#c0392b");}
+  catch(e){ksStat("gagal — pastikan tabel 'kpi_store' (kolom detail) sudah dibuat","#c0392b");}
 }
-// ===== MODUL INSENTIF (baca + hitung dari Filing Cabinet) =====
+/* ===== MODUL INSENTIF ===== */
 let INSDATA=[];
 function insStat(t,c){const s=$("insStatus");if(s){s.textContent=t;s.style.color=c||"#6b7280";}}
 function insIns(d){
+  if(d.divisi==="KACAB"){const n=num(d.skor)||0;return{net:+n.toFixed(1),grade:(n>=90?"A":n>=80?"B":n>=70?"C":n>=60?"D":"E"),ins:kacabIns(n)};}
   if(isFull(d.usaha,d.divisi))return compute({tipe:"GT",pagu:d.pagu,sales:d.sales,oa:d.oa,noo:d.noo,sku:d.sku,npd:d.npd,piutangPt:d.piutang_pt,retur:d.retur,telat:d.telat});
   const sk=num(d.skor)||0;return{net:+sk.toFixed(1),grade:gradeOf(sk),ins:Math.round((num(d.pagu)||0)*sk/100)};
 }
@@ -478,8 +499,7 @@ function insCSV(){const uf=$("insUsaha")?$("insUsaha").value:"Semua";const rows=
   const out=rows.map(d=>{const r=insIns(d);return[d.usaha,d.cabang,d.divisi,d.nama,d.pagu,r.net,r.grade,r.ins,d.ttd_date||""];});
   const csv=[head,...out].map(r=>r.map(c=>`"${c??""}"`).join(",")).join("\n");
   const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="Insentif_"+MONTHS[$("month").value-1]+"_"+$("year").value+".csv";a.click();}
-function renderDashCards(){_renderDashCards();}
-async function _renderDashCards(){
+async function renderDashCards(){
   const dc=$("dashCards");if(dc&&!dc.innerHTML)dc.innerHTML=card("Karyawan ber-TTD","…","")+card("Total Insentif "+MONTHS[$("month").value-1],"…","")+card("Modul Aktif",""+naktif(),"/ 12");
   let n=0,tot=0;
   if(!SB)await loadSupa();
@@ -509,9 +529,7 @@ function payLoad(silent){
   try{const d=localStorage.getItem(payKey());PAY=d?JSON.parse(d):[];}catch(e){PAY=[];}
   if(!silent)renderPay();
 }
-function payPull(){
-  alert("Tarik insentif dari modul INSENTIF akan disambungkan otomatis pada versi berikutnya.");
-}
+function payPull(){alert("Tarik insentif dari modul INSENTIF akan disambungkan otomatis pada versi berikutnya.");}
 function renderPay(){
   const tb=$("payBody");if(!tb)return;tb.innerHTML="";
   PAY.forEach((p,i)=>{const r=payCompute(p);const tr=document.createElement("tr");
@@ -559,7 +577,7 @@ function slip(i){
    <script>window.onload=function(){window.print();}<\/script>
   </body></html>`);w.document.close();
 }
-/* ---------- AUTH (login & izin admin) ---------- */
+/* ---------- AUTH ---------- */
 async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
 function aMsg(t,c){const e=document.getElementById('authMsg');if(e){e.textContent=t;e.style.color=c||'#c0392b';}}
 function authTab(which){
@@ -640,7 +658,7 @@ async function checkSession(){
   }catch(e){}
   localStorage.removeItem('hig_user');
 }
-/* ---------- KELOLA PENGGUNA (admin) ---------- */
+/* ---------- PENGGUNA ---------- */
 async function usersLoad(){
   if(!isAdmin())return;
   if(!SB)await loadSupa();const tb=document.getElementById('usersBody');if(!tb)return;
