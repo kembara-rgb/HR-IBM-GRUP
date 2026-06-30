@@ -165,7 +165,7 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
           <ul>
             <li>INSENTIF hanya <b>membaca</b> KPI yang sudah ber-<b>TTD</b> di Filing Cabinet, untuk periode terpilih.</li>
             <li>Distribusi (divisi produk): Insentif = Pagu × Indeks KPI. KACAB: insentif bertingkat dari Nilai 5 Pilar. Lainnya: Pagu × Skor%.</li>
-            <li>Pengisian & TTD dilakukan di Filing Cabinet — di sini tidak bisa diedit.</li>
+            <li>Ikon 📄 di kolom Tgl TTD = ada file scan TTD yang bisa dibuka. Pengisian dilakukan di Filing Cabinet.</li>
           </ul>
         </details>
       </div>
@@ -186,7 +186,7 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
           <ul>
             <li>Pilih <b>Usaha → Cabang → Divisi/Jabatan</b>, lalu isi KPI untuk periode terpilih.</li>
             <li><b>KACAB:</b> form KPI 5 Pilar (15 indikator) → skor & insentif otomatis. <b>Distribusi (divisi produk):</b> KPI lengkap. <b>Lainnya:</b> Skor KPI manual + Pagu.</li>
-            <li>Centang <b>Sudah TTD</b> setelah karyawan menandatangani — hanya yang ber-TTD yang dihitung di modul INSENTIF.</li>
+            <li>Centang <b>Sudah TTD</b> & unggah <b>Scan TTD</b> setelah karyawan menandatangani — hanya yang ber-TTD yang dihitung di modul INSENTIF.</li>
           </ul>
         </details>
       </div>
@@ -257,7 +257,7 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-const APP_VER="1.6", APP_DATE="30 Jun 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="1.7", APP_DATE="30 Jun 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 function buildNav(){
@@ -397,13 +397,13 @@ async function ksLoad(){
   try{
     const {data,error}=await SB.from("kpi_store").select("*").eq("period_year",Y()).eq("period_month",M()).eq("usaha",$("ksUsaha").value).eq("cabang",$("ksCab").value).eq("divisi",$("ksDiv").value);
     if(error)throw error;
-    if(ksMode()==="kacab"){const d0=(data||[])[0];KSDATA=[{nama:d0?d0.nama:"",ach:(d0&&d0.detail)||{},ttd:!!(d0&&d0.ttd),ttd_date:(d0&&d0.ttd_date)||""}];}
+    if(ksMode()==="kacab"){const d0=(data||[])[0];KSDATA=[{nama:d0?d0.nama:"",ach:(d0&&d0.detail)||{},ttd:!!(d0&&d0.ttd),ttd_date:(d0&&d0.ttd_date)||"",ttd_file:(d0&&d0.ttd_file)||""}];}
     else KSDATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama||"",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??"",skor:d.skor??"",ttd:!!d.ttd,ttd_date:d.ttd_date||""}));
     ksStat("tersinkron","#1d9e75");
   }catch(e){ksStat("offline — pastikan tabel 'kpi_store' sudah dibuat","#c0392b");KSDATA=[];}
   ksRender();
 }
-function ksAdd(){if(ksMode()==="kacab"){if(!KSDATA.length)KSDATA=[{nama:"",ach:{},ttd:false,ttd_date:""}];ksRender();return;}KSDATA.push({nik:"",nama:"",pagu:0,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:"",skor:"",ttd:false,ttd_date:""});ksRender();}
+function ksAdd(){if(ksMode()==="kacab"){if(!KSDATA.length)KSDATA=[{nama:"",ach:{},ttd:false,ttd_date:"",ttd_file:""}];ksRender();return;}KSDATA.push({nik:"",nama:"",pagu:0,sales:"",oa:"",noo:"",sku:"",npd:"",piutangPt:0,retur:"",telat:"",skor:"",ttd:false,ttd_date:""});ksRender();}
 function ksDel(i){KSDATA.splice(i,1);ksRender();}
 function ksTtd(i,checked){KSDATA[i].ttd=checked;KSDATA[i].ttd_date=checked?(new Date().toISOString().slice(0,10)):"";ksRender();}
 function ksRender(){
@@ -431,7 +431,7 @@ function ksRender(){
   body.querySelectorAll("input[data-f]").forEach(el=>el.addEventListener("input",ev=>{const i=+ev.target.dataset.i,f=ev.target.dataset.f;KSDATA[i][f]=ev.target.value;ksRender();}));
 }
 function ksRenderKacab(){
-  if(!KSDATA.length)KSDATA=[{nama:"",ach:{},ttd:false,ttd_date:""}];
+  if(!KSDATA.length)KSDATA=[{nama:"",ach:{},ttd:false,ttd_date:"",ttd_file:""}];
   const e=KSDATA[0];const ach=e.ach||(e.ach={});
   const nilai=kacabNilai(ach),pred=kacabPred(nilai),ins=kacabIns(nilai);
   $("ksHead").innerHTML=`<tr><th>Pilar</th><th style="text-align:left">Indikator</th><th>Bobot</th><th>Capaian %</th><th>Skor 0–110</th><th>Nilai (×bobot)</th></tr>`;
@@ -442,9 +442,31 @@ function ksRenderKacab(){
   rows+=`<tr style="background:#eef5ee;font-weight:bold"><td colspan="3" style="text-align:right">NILAI AKHIR →</td><td>—</td><td>—</td><td class="out" style="font-size:15px">${nilai}</td></tr>`;
   rows+=`<tr style="background:#fff8e6;font-weight:bold"><td colspan="3" style="text-align:right">Predikat / Insentif →</td><td colspan="3" style="text-align:left"><span class="badge2 g${nilai>=90?'A':nilai>=80?'B':nilai>=70?'C':nilai>=60?'D':'E'}">${pred}</span> &nbsp; <span class="ins">Rp ${rupiah(ins)}</span></td></tr>`;
   rows+=`<tr><td colspan="3" style="text-align:right">Sudah TTD?</td><td><input type="checkbox" ${e.ttd?"checked":""} onchange="ksTtd(0,this.checked)"></td><td colspan="2" style="text-align:left;font-size:11px;color:#6b7280">${e.ttd_date||"-"}</td></tr>`;
+  const fcell=e.ttd_file?`<a href="${e.ttd_file}" target="_blank" style="color:#1d9e75;font-weight:bold">📄 Lihat Scan</a>`:`<span style="color:#9aa0aa">belum ada file</span>`;
+  rows+=`<tr style="background:#f7f9fc"><td colspan="3" style="text-align:right">Scan TTD (PDF/Foto)</td><td colspan="3" style="text-align:left"><input type="file" accept="image/*,application/pdf" onchange="ksUpload(this)" style="font-size:12px"> &nbsp; ${fcell}</td></tr>`;
   $("ksBody").innerHTML=rows;
   const nm=$("kskNama");if(nm)nm.addEventListener("change",ev=>{KSDATA[0].nama=ev.target.value;});
   $("ksBody").querySelectorAll("input[data-ach]").forEach(el=>el.addEventListener("change",ev=>{KSDATA[0].ach[ev.target.dataset.ach]=ev.target.value;ksRenderKacab();}));
+}
+async function ksUpload(input){
+  const f=input&&input.files&&input.files[0];if(!f)return;
+  if(f.size>10*1024*1024){ksStat("file terlalu besar (maks 10MB)","#c0392b");return;}
+  if(!SB)await loadSupa();
+  if(!SB){ksStat("offline — tidak bisa upload","#c0392b");return;}
+  const u=$("ksUsaha").value,c=$("ksCab").value,d=$("ksDiv").value;
+  if(!KSDATA.length)KSDATA=[{nama:"",ach:{},ttd:false,ttd_date:"",ttd_file:""}];
+  const e=KSDATA[0];const nm=((e.nama||"kacab")+"").replace(/[^a-zA-Z0-9]/g,"_");
+  const ext=((f.name.split(".").pop())||"dat").toLowerCase();
+  const path=(u+"/"+c+"/"+Y()+"-"+M()+"-"+d+"-"+nm+"-"+Date.now()+"."+ext).replace(/\s+/g,"_");
+  ksStat("mengunggah scan…");
+  try{
+    const {error}=await SB.storage.from("ttd_scans").upload(path,f,{upsert:true,contentType:f.type||"application/octet-stream"});
+    if(error)throw error;
+    const {data}=SB.storage.from("ttd_scans").getPublicUrl(path);
+    KSDATA[0].ttd_file=data.publicUrl;
+    ksStat("scan terunggah ✓ — klik Save untuk simpan","#1d9e75");
+    ksRenderKacab();
+  }catch(err){ksStat("gagal upload — pastikan bucket 'ttd_scans' sudah dibuat","#c0392b");}
 }
 async function ksSave(){
   if(!SB)await loadSupa();
@@ -454,14 +476,14 @@ async function ksSave(){
   if(ksMode()==="kacab"){
     const e=KSDATA[0]||{};if(!e.nama||!(""+e.nama).trim()){ksStat("isi Nama Kepala Cabang dulu","#c0392b");return;}
     const nilai=kacabNilai(e.ach);
-    recs=[{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nama:e.nama,pagu:0,skor:nilai,insentif:kacabIns(nilai),detail:e.ach||{},ttd:!!e.ttd,ttd_date:e.ttd_date||null}];
+    recs=[{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nama:e.nama,pagu:0,skor:nilai,insentif:kacabIns(nilai),detail:e.ach||{},ttd:!!e.ttd,ttd_date:e.ttd_date||null,ttd_file:e.ttd_file||null}];
   }else{
     recs=KSDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>{const r=ksIns(e);return{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nik:e.nik||null,nama:e.nama,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),skor:toNum(e.skor),insentif:r.ins,ttd:!!e.ttd,ttd_date:e.ttd_date||null};});
   }
   if(!recs.length){ksStat("tidak ada data terisi");return;}
   ksStat("menyimpan…");
   try{const {error}=await SB.from("kpi_store").upsert(recs,{onConflict:"period_year,period_month,usaha,cabang,divisi,nama"});if(error)throw error;ksStat("tersimpan ✓","#1d9e75");}
-  catch(e){ksStat("gagal — pastikan tabel 'kpi_store' (kolom detail) sudah dibuat","#c0392b");}
+  catch(e){ksStat("gagal — pastikan kolom 'detail' & 'ttd_file' sudah dibuat","#c0392b");}
 }
 /* ===== MODUL INSENTIF ===== */
 let INSDATA=[];
@@ -489,7 +511,8 @@ function insRender(){
   const body=$("insBody");if(!body)return;body.innerHTML="";
   let tot=0,n=0;
   rows.forEach(d=>{const r=insIns(d);tot+=r.ins;n++;const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${d.usaha}</td><td>${d.cabang}</td><td>${d.divisi}</td><td class="name">${d.nama}</td><td>${rupiah(d.pagu)}</td><td class="out">${r.net}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td><td style="font-size:11px;color:#6b7280">${d.ttd_date||"-"}</td>`;
+    const scan=d.ttd_file?` <a href="${d.ttd_file}" target="_blank" title="Lihat scan TTD">📄</a>`:"";
+    tr.innerHTML=`<td>${d.usaha}</td><td>${d.cabang}</td><td>${d.divisi}</td><td class="name">${d.nama}</td><td>${rupiah(d.pagu)}</td><td class="out">${r.net}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td><td style="font-size:11px;color:#6b7280">${d.ttd_date||"-"}${scan}</td>`;
     body.appendChild(tr);});
   if(!rows.length)body.innerHTML='<tr><td colspan="9" style="color:#6b7280;text-align:left;padding:12px">Belum ada KPI ber-TTD pada periode ini. Isi & centang "Sudah TTD" di modul Simpan KPI Karyawan.</td></tr>';
   const ic=$("insCards");if(ic)ic.innerHTML=card("Karyawan ber-TTD",n,"")+card("Total Insentif "+MONTHS[$("month").value-1],"Rp "+rupiah(tot),"");
