@@ -236,6 +236,28 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
           <p style="font-size:11.5px;color:var(--dim);margin-top:14px">Integrasi data Orlansoft sedang dirakit — angka di atas akan hidup otomatis begitu pipeline aktif.</p>
         </div>
       </div>
+      <div class="view" id="view-master">
+        <div class="toolbar">
+          <button class="primary" onclick="empLoad()">↻ Muat</button>
+          <button onclick="empPull()">⤵ Tarik dari KPI (v1)</button>
+          <button onclick="empAdd()">+ Tambah</button>
+          <button onclick="empSave()">💾 Save</button>
+          <button onclick="empCSV()">⬇ Ekspor CSV</button>
+          <input id="empSearch" placeholder="Cari nama…" oninput="empRender()" style="padding:6px 10px;border-radius:6px;border:1px solid var(--line2);background:var(--panel);color:var(--cream);font-size:13px"/>
+          <span id="empStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#8b949e"></span>
+        </div>
+        <div class="cards" id="empCards"></div>
+        <div class="tablewrap"><table style="min-width:1080px"><thead>
+          <tr><th>NIK</th><th>Nama</th><th>Usaha</th><th>Cabang</th><th>Divisi/Bagian</th><th>Jabatan</th><th>SPV</th><th>No. HP</th><th>Status</th><th></th></tr>
+        </thead><tbody id="empBody"></tbody></table></div>
+        <details><summary>Tentang Master Data Karyawan</summary>
+          <ul>
+            <li>Data induk seluruh karyawan — jadi acuan modul KPI, INSENTIF, payroll, dan MEDIAN.</li>
+            <li><b>Tarik dari KPI (v1)</b> mengimpor otomatis semua nama yang pernah diinput di modul KPI lama & Filing Cabinet (tanpa duplikat).</li>
+            <li>NIK ganda ditandai <span style="color:#c0392b;font-weight:bold">merah</span> — mohon dirapikan lalu Save.</li>
+          </ul>
+        </details>
+      </div>
       <div class="view" id="view-kpi">
         <div class="toolbar">
           <button class="primary" onclick="insLoad()">↻ Muat dari Filing Cabinet</button>
@@ -353,7 +375,7 @@ const MODULES=[
  {id:"kpi",name:"INSENTIF",ic:"🎯",status:"aktif",grp:"utama",desc:"Baca KPI ber-TTD dari Filing Cabinet & hitung insentif."},
  {id:"kpistore",name:"Simpan KPI Karyawan",ic:"🗄️",status:"aktif",grp:"utama",desc:"Filing Cabinet: arsip KPI per Usaha/Cabang/Divisi + TTD."},
  {id:"users",name:"Pengguna",ic:"👥",status:"aktif",grp:"utama",desc:"Kelola pengguna & izin admin.",admin:true},
- {id:"master",name:"Master Data Karyawan",ic:"👤",status:"segera",grp:"data",desc:"Profil, NIK, jabatan, divisi, BPJS, rekening, keluarga.",will:["Data lengkap tiap karyawan","Cek anti-fraud (rekening & NIK)","Dasar semua modul lain"]},
+ {id:"master",name:"Master Data Karyawan",ic:"👤",status:"aktif",grp:"data",desc:"Data induk karyawan: NIK, jabatan, divisi, SPV, kontak."},
  {id:"selfservice",name:"Self-Service Karyawan",ic:"📱",status:"segera",grp:"data",desc:"Karyawan isi data sendiri via HP, HRD validasi.",will:["Form pengisian di HP","Validasi & approval HRD","Data terkunci di master"]},
  {id:"karir",name:"Jenjang Karir & Talenta",ic:"🪜",status:"segera",grp:"data",desc:"Tangga karir & matriks talenta 9-box.",will:["Jalur Salesman→Direktur","9-box performa × potensi","Rekomendasi orbit/saring"]},
  {id:"struktur",name:"Struktur Organisasi",ic:"🏢",status:"rencana",grp:"ops",desc:"Bagan organisasi per entitas.",will:["Org chart dinamis","Atasan–bawahan","Per entitas/divisi"]},
@@ -365,7 +387,7 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-const APP_VER="2.0", APP_DATE="4 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="2.1", APP_DATE="4 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 function greet(){const h=new Date().getHours();return h<11?"pagi":h<15?"siang":h<19?"sore":"malam";}
@@ -408,6 +430,7 @@ function go(id){
   document.getElementById("periodBox").style.display = (id==="kpi"||id==="payroll"||id==="kpistore")?"flex":"none";
   if(id==="dashboard"){document.getElementById("view-dashboard").classList.add("show");buildDash();renderDashCards();}
   else if(id==="median"){document.getElementById("view-median").classList.add("show");}
+  else if(id==="master"){document.getElementById("view-master").classList.add("show");empLoad();}
   else if(id==="kpi"){document.getElementById("view-kpi").classList.add("show");insLoad();}
   else if(id==="kpistore"){document.getElementById("view-kpistore").classList.add("show");ksInit();}
   else if(id==="payroll"){document.getElementById("view-payroll").classList.add("show");payLoad();}
@@ -648,6 +671,92 @@ function card(l,v,s,fs){return `<div class="card"><div class="lbl">${l}</div><di
 function initPeriod(){const m=$("month"),y=$("year");MONTHS.forEach((nm,i)=>{const o=document.createElement("option");o.value=i+1;o.textContent=nm;m.appendChild(o);});
   for(let yy=2026;yy<=2028;yy++){const o=document.createElement("option");o.value=yy;o.textContent=yy;y.appendChild(o);}m.value=7;y.value=2026;
   m.onchange=y.onchange=()=>{if(ACTIVE==="kpi"){insLoad();}else if(ACTIVE==="payroll"){payLoad();}else if(ACTIVE==="kpistore"){ksLoad();}renderDashCards();};}
+/* ---------- MASTER DATA KARYAWAN ---------- */
+let EMP=[];
+function empStat(t,c){const s=$("empStatus");if(s){s.textContent=t;s.style.color=c||"#8b949e";}}
+function divToCabang(d){
+  if(!d)return{usaha:"IBM-GRUP",cabang:"Bandar Lampung"};
+  if(/Metro/i.test(d))return{usaha:"IBM-GRUP",cabang:"Metro"};
+  if(/Plb/i.test(d))return{usaha:"IBM-GRUP",cabang:"Palembang"};
+  return{usaha:"IBM-GRUP",cabang:"Bandar Lampung"};
+}
+async function empLoad(){
+  if(!SB)await loadSupa();
+  if(!SB){empStat("offline","#c0392b");EMP=[];empRender();return;}
+  empStat("memuat…");
+  try{
+    const {data,error}=await SB.from("employees").select("*").order("cabang").order("nama");
+    if(error)throw error;
+    EMP=(data||[]).map(d=>({id:d.id,nik:d.nik||"",nama:d.nama||"",usaha:d.usaha||"IBM-GRUP",cabang:d.cabang||"",divisi:d.divisi||"",jabatan:d.jabatan||"",spv:d.spv||"",hp:d.hp||"",status:d.status||"aktif"}));
+    empStat("tersinkron — "+EMP.length+" karyawan","#1d9e75");
+  }catch(e){empStat("offline — jalankan SQL tabel 'employees' dulu","#c0392b");EMP=[];}
+  empRender();
+}
+async function empPull(){
+  if(!SB)await loadSupa();
+  if(!SB){empStat("offline","#c0392b");return;}
+  empStat("menarik data KPI v1…");
+  let src=[];
+  try{const {data}=await SB.from("kpi_entries").select("nik,nama,divisi,spv");(data||[]).forEach(d=>src.push({nik:d.nik,nama:d.nama,divisi:d.divisi,spv:d.spv,jabatan:"Salesman"}));}catch(e){}
+  try{const {data}=await SB.from("kpi_store").select("nik,nama,divisi,usaha,cabang");(data||[]).forEach(d=>src.push({nik:d.nik,nama:d.nama,divisi:d.divisi,usaha:d.usaha,cabang:d.cabang,jabatan:d.divisi==="KACAB"?"Kepala Cabang":"Salesman"}));}catch(e){}
+  const have=new Set(EMP.map(e=>(e.nama||"").trim().toLowerCase()+"|"+e.cabang));
+  let added=0;
+  src.forEach(s=>{
+    if(!s.nama||!(""+s.nama).trim())return;
+    const loc=s.cabang?{usaha:s.usaha||"IBM-GRUP",cabang:s.cabang}:divToCabang(s.divisi);
+    const k=(""+s.nama).trim().toLowerCase()+"|"+loc.cabang;
+    if(have.has(k))return;have.add(k);
+    EMP.push({nik:s.nik||"",nama:(""+s.nama).trim(),usaha:loc.usaha,cabang:loc.cabang,divisi:s.divisi||"",jabatan:s.jabatan||"Salesman",spv:s.spv||"",hp:"",status:"aktif"});
+    added++;
+  });
+  empStat(added?("+"+added+" karyawan ditarik — klik Save untuk simpan"):"tidak ada nama baru","#1d9e75");
+  empRender();
+}
+function empAdd(){EMP.push({nik:"",nama:"",usaha:"IBM-GRUP",cabang:"Bandar Lampung",divisi:"",jabatan:"",spv:"",hp:"",status:"aktif"});empRender();}
+async function empDel(i){
+  const e=EMP[i];
+  if(!confirm("Hapus "+(e.nama||"baris ini")+" dari master?"))return;
+  if(e.id&&SB){try{await SB.from("employees").delete().eq("id",e.id);}catch(err){}}
+  EMP.splice(i,1);empRender();
+}
+function empRender(){
+  const tb=$("empBody");if(!tb)return;tb.innerHTML="";
+  const q=($("empSearch")?$("empSearch").value:"").trim().toLowerCase();
+  const nikCount={};EMP.forEach(e=>{const k=(e.nik||"").trim();if(k)nikCount[k]=(nikCount[k]||0)+1;});
+  let shown=0;
+  EMP.forEach((e,i)=>{
+    if(q&&!((e.nama||"").toLowerCase().includes(q)||(e.nik||"").toLowerCase().includes(q)))return;
+    shown++;
+    const dup=e.nik&&nikCount[(e.nik||"").trim()]>1;
+    const tr=document.createElement("tr");
+    const inp=(f,w)=>`<input style="width:${w||90}px;text-align:left" data-i="${i}" data-f="${f}" value="${(e[f]??"").toString().replace(/"/g,'&quot;')}">`;
+    const su=`<select data-i="${i}" data-f="usaha">`+Object.keys(USAHA).map(u=>`<option ${e.usaha===u?"selected":""}>${u}</option>`).join("")+`</select>`;
+    const cabs=USAHA[e.usaha]?Object.keys(USAHA[e.usaha].cabang):[];
+    const sc=`<select data-i="${i}" data-f="cabang">`+(cabs.includes(e.cabang)?"":`<option selected>${e.cabang||"—"}</option>`)+cabs.map(c=>`<option ${e.cabang===c?"selected":""}>${c}</option>`).join("")+`</select>`;
+    const st=`<select data-i="${i}" data-f="status"><option ${e.status==="aktif"?"selected":""}>aktif</option><option ${e.status==="nonaktif"?"selected":""}>nonaktif</option></select>`;
+    tr.innerHTML=`<td${dup?' style="background:#fce4e4"':''}>${inp("nik",70)}${dup?' <span title="NIK ganda" style="color:#c0392b;font-weight:bold">!</span>':''}</td>`+
+      `<td class="name">${inp("nama",130)}</td><td>${su}</td><td>${sc}</td><td>${inp("divisi",100)}</td><td>${inp("jabatan",100)}</td><td>${inp("spv",90)}</td><td>${inp("hp",100)}</td><td>${st}</td>`+
+      `<td><button class="del" onclick="empDel(${i})">×</button></td>`;
+    tb.appendChild(tr);
+  });
+  if(!shown)tb.innerHTML='<tr><td colspan="10" style="text-align:left;padding:12px;color:#6b7280">Belum ada data. Klik <b>⤵ Tarik dari KPI (v1)</b> untuk mengimpor karyawan yang sudah pernah diinput.</td></tr>';
+  tb.querySelectorAll("input[data-f],select[data-f]").forEach(el=>el.addEventListener("change",ev=>{const i=+ev.target.dataset.i,f=ev.target.dataset.f;EMP[i][f]=ev.target.value;empRender();}));
+  const ec=$("empCards");if(ec){const akt=EMP.filter(e=>e.status!=="nonaktif").length;const dups=Object.values(EMP.reduce((a,e)=>{const k=(e.nik||"").trim();if(k)a[k]=(a[k]||0)+1;return a;},{})).filter(n=>n>1).length;
+    ec.innerHTML=card("Total Karyawan",EMP.length,"")+card("Aktif",akt,"")+card("NIK Ganda",dups,dups?"⚠":"");}
+}
+async function empSave(){
+  if(!SB)await loadSupa();
+  if(!SB){empStat("offline — tidak tersimpan","#c0392b");return;}
+  const recs=EMP.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>({nik:e.nik||null,nama:(""+e.nama).trim(),usaha:e.usaha||"IBM-GRUP",cabang:e.cabang||"",divisi:e.divisi||null,jabatan:e.jabatan||null,spv:e.spv||null,hp:e.hp||null,status:e.status||"aktif"}));
+  if(!recs.length){empStat("tidak ada data terisi");return;}
+  empStat("menyimpan…");
+  try{const {error}=await SB.from("employees").upsert(recs,{onConflict:"usaha,cabang,nama"});if(error)throw error;empStat("tersimpan ✓ — "+recs.length+" karyawan","#1d9e75");empLoad();}
+  catch(e){empStat("gagal — pastikan tabel 'employees' sudah dibuat (SQL)","#c0392b");}
+}
+function empCSV(){const head=["NIK","Nama","Usaha","Cabang","Divisi","Jabatan","SPV","HP","Status"];
+  const rows=EMP.map(e=>[e.nik,e.nama,e.usaha,e.cabang,e.divisi,e.jabatan,e.spv,e.hp,e.status]);
+  const csv=[head,...rows].map(r=>r.map(c=>`"${c??""}"`).join(",")).join("\n");
+  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="Master_Karyawan.csv";a.click();}
 /* ---------- PAYROLL ---------- */
 let PAY=[];
 const NPN=v=>{v=parseFloat(v);return isNaN(v)?0:v;};
