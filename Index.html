@@ -305,6 +305,17 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
           </ul>
         </details>
       </div>
+      <div class="view" id="view-riwayat">
+        <div class="toolbar">
+          <input id="rwName" placeholder="Ketik nama karyawan…" style="padding:8px 12px;border-radius:6px;border:1px solid var(--line2);background:var(--panel);color:var(--cream);font-size:13px;min-width:220px" onkeydown="if(event.key==='Enter')rwLoad()"/>
+          <button class="primary" onclick="rwLoad()">🔍 Cari Riwayat</button>
+          <span id="rwStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#8b949e"></span>
+        </div>
+        <div class="cards" id="rwCards"></div>
+        <div class="tablewrap"><table style="min-width:820px"><thead>
+          <tr><th>Periode</th><th>Usaha</th><th>Cabang</th><th>Bagian</th><th>Nama</th><th>Skor</th><th>Grade</th><th>Insentif</th><th>TTD</th></tr>
+        </thead><tbody id="rwBody"><tr><td colspan="9" style="text-align:left;padding:12px;color:#6b7280">Ketik nama lalu klik Cari — seluruh riwayat KPI karyawan itu (semua periode) muncul di sini, lengkap dengan scan TTD-nya.</td></tr></tbody></table></div>
+      </div>
       <div class="view" id="view-payroll">
         <div class="toolbar">
           <button class="primary" onclick="payAdd()">+ Tambah Karyawan</button>
@@ -374,6 +385,7 @@ const MODULES=[
  {id:"median",name:"MEDIAN",ic:"🧭",status:"aktif",grp:"utama",desc:"Mesin disiplin harian — tugas, verifikasi, KPI cabang."},
  {id:"kpi",name:"INSENTIF",ic:"🎯",status:"aktif",grp:"utama",desc:"Baca KPI ber-TTD dari Filing Cabinet & hitung insentif."},
  {id:"kpistore",name:"Simpan KPI Karyawan",ic:"🗄️",status:"aktif",grp:"utama",desc:"Filing Cabinet: arsip KPI per Usaha/Cabang/Divisi + TTD."},
+ {id:"riwayat",name:"Riwayat KPI",ic:"📚",status:"aktif",grp:"utama",desc:"Arsip KPI per karyawan lintas periode + tren + scan TTD."},
  {id:"users",name:"Pengguna",ic:"👥",status:"aktif",grp:"utama",desc:"Kelola pengguna & izin admin.",admin:true},
  {id:"master",name:"Master Data Karyawan",ic:"👤",status:"aktif",grp:"data",desc:"Data induk karyawan: NIK, jabatan, divisi, SPV, kontak."},
  {id:"selfservice",name:"Self-Service Karyawan",ic:"📱",status:"segera",grp:"data",desc:"Karyawan isi data sendiri via HP, HRD validasi.",will:["Form pengisian di HP","Validasi & approval HRD","Data terkunci di master"]},
@@ -387,7 +399,7 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-const APP_VER="2.2", APP_DATE="5 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="2.3", APP_DATE="5 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 function greet(){const h=new Date().getHours();return h<11?"pagi":h<15?"siang":h<19?"sore":"malam";}
@@ -431,6 +443,7 @@ function go(id){
   if(id==="dashboard"){document.getElementById("view-dashboard").classList.add("show");buildDash();renderDashCards();}
   else if(id==="median"){document.getElementById("view-median").classList.add("show");}
   else if(id==="master"){document.getElementById("view-master").classList.add("show");empLoad();}
+  else if(id==="riwayat"){document.getElementById("view-riwayat").classList.add("show");}
   else if(id==="kpi"){document.getElementById("view-kpi").classList.add("show");insLoad();}
   else if(id==="kpistore"){document.getElementById("view-kpistore").classList.add("show");ksInit();}
   else if(id==="payroll"){document.getElementById("view-payroll").classList.add("show");payLoad();}
@@ -626,18 +639,58 @@ async function ksSave(){
   if(!SB)await loadSupa();
   if(!SB){ksStat("offline — tidak tersimpan","#c0392b");return;}
   const u=$("ksUsaha").value,c=$("ksCab").value,d=$("ksDiv").value;
+  const idx=await empIndex();
+  const eid=nm=>idx[(nm||"").trim().toLowerCase()]||null;
   let recs;
   if(ksMode()==="kacab"){
     const e=KSDATA[0]||{};if(!e.nama||!(""+e.nama).trim()){ksStat("isi Nama Kepala Cabang dulu","#c0392b");return;}
     const nilai=kacabFinal(e.ach).final;
-    recs=[{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nama:e.nama,pagu:0,skor:nilai,insentif:kacabIns(nilai),detail:e.ach||{},ttd:!!e.ttd,ttd_date:e.ttd_date||null,ttd_file:e.ttd_file||null}];
+    recs=[{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nama:e.nama,employee_id:eid(e.nama),pagu:0,skor:nilai,insentif:kacabIns(nilai),detail:e.ach||{},ttd:!!e.ttd,ttd_date:e.ttd_date||null,ttd_file:e.ttd_file||null}];
   }else{
-    recs=KSDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>{const r=ksIns(e);return{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nik:e.nik||null,nama:e.nama,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),skor:toNum(e.skor),insentif:r.ins,ttd:!!e.ttd,ttd_date:e.ttd_date||null};});
+    recs=KSDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>{const r=ksIns(e);return{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nik:e.nik||null,nama:e.nama,employee_id:eid(e.nama),pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),skor:toNum(e.skor),insentif:r.ins,ttd:!!e.ttd,ttd_date:e.ttd_date||null};});
   }
   if(!recs.length){ksStat("tidak ada data terisi");return;}
   ksStat("menyimpan…");
   try{const {error}=await SB.from("kpi_store").upsert(recs,{onConflict:"period_year,period_month,usaha,cabang,divisi,nama"});if(error)throw error;ksStat("tersimpan ✓","#1d9e75");}
   catch(e){ksStat("gagal — pastikan kolom 'detail' & 'ttd_file' sudah dibuat","#c0392b");}
+}
+/* ===== RIWAYAT KPI (arsip per karyawan) ===== */
+function rwStat(t,c){const s=$("rwStatus");if(s){s.textContent=t;s.style.color=c||"#8b949e";}}
+async function rwLoad(){
+  const q=($("rwName")?$("rwName").value:"").trim();
+  if(!q){rwStat("ketik nama dulu","#ba7517");return;}
+  if(!SB)await loadSupa();
+  if(!SB){rwStat("offline","#c0392b");return;}
+  rwStat("mencari…");
+  let rows=[];
+  try{
+    const {data,error}=await SB.from("kpi_store").select("*").ilike("nama","%"+q+"%").order("period_year",{ascending:false}).order("period_month",{ascending:false});
+    if(error)throw error;rows=data||[];
+    rwStat(rows.length?("ditemukan "+rows.length+" arsip"):"tidak ada arsip untuk nama itu",rows.length?"#1d9e75":"#ba7517");
+  }catch(e){rwStat("gagal memuat","#c0392b");}
+  const tb=$("rwBody");tb.innerHTML="";
+  let sum=0,n=0;
+  rows.forEach(d=>{
+    const sk=(d.skor!=null)?d.skor:insIns(d).net;
+    const ins=(d.insentif!=null)?d.insentif:insIns(d).ins;
+    const gr=sk>=90?"A":sk>=80?"B":sk>=70?"C":sk>=60?"D":"E";
+    sum+=+sk;n++;
+    const scan=d.ttd_file?` <a href="${d.ttd_file}" target="_blank" title="Lihat scan TTD">📄</a>`:"";
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${MONTHS[(d.period_month||1)-1]} ${d.period_year}</b></td><td>${d.usaha||"-"}</td><td>${d.cabang||"-"}</td><td>${d.divisi||"-"}</td><td class="name">${d.nama}</td><td class="out">${sk}</td><td><span class="badge2 g${gr}">${gr}</span></td><td class="out ins">${rupiah(ins)}</td><td style="font-size:11px;color:#6b7280">${d.ttd?(d.ttd_date||"✓"):"belum"}${scan}</td>`;
+    tb.appendChild(tr);
+  });
+  if(!rows.length)tb.innerHTML='<tr><td colspan="9" style="text-align:left;padding:12px;color:#6b7280">Tidak ada arsip. Pastikan KPI-nya sudah di-Save di modul Simpan KPI Karyawan.</td></tr>';
+  const rc=$("rwCards");
+  if(rc)rc.innerHTML=card("Jumlah Arsip",n,"")+card("Rata-rata Skor",n?(sum/n).toFixed(1):"—","")+card("Terbaru",rows.length?(MONTHS[(rows[0].period_month||1)-1]+" "+rows[0].period_year):"—","","16px");
+}
+/* pengait Master: nama → employee_id */
+let EMPIDX=null;
+async function empIndex(){
+  if(EMPIDX)return EMPIDX;
+  EMPIDX={};
+  try{const {data}=await SB.from("employees").select("id,nama");(data||[]).forEach(d=>{EMPIDX[(d.nama||"").trim().toLowerCase()]=d.id;});}catch(e){}
+  return EMPIDX;
 }
 /* ===== MODUL INSENTIF ===== */
 let INSDATA=[];
