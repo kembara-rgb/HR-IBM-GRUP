@@ -366,6 +366,7 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
   <div class="bi" id="bi-kpistore" onclick="go('kpistore')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/></svg>Arsip</div>
   <div class="bi" id="bi-payroll" onclick="go('payroll')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>Gaji</div>
 </div>
+<datalist id="empNames"></datalist>
 <div id="cpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:200">
   <div style="background:#fff;border-radius:12px;padding:22px;width:330px;max-width:90%">
     <div style="font-weight:bold;color:#1F3864;font-size:15px;margin-bottom:12px">Ganti Password</div>
@@ -399,7 +400,7 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-const APP_VER="2.4", APP_DATE="5 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="2.5", APP_DATE="5 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 function greet(){const h=new Date().getHours();return h<11?"pagi":h<15?"siang":h<19?"sore":"malam";}
@@ -550,10 +551,18 @@ function ksIns(e){
   if(ksMode()==="full")return compute({tipe:"GT",pagu:e.pagu,sales:e.sales,oa:e.oa,noo:e.noo,sku:e.sku,npd:e.npd,piutangPt:e.piutangPt,retur:e.retur,telat:e.telat});
   const sk=num(e.skor)||0;return{net:+sk.toFixed(1),grade:gradeOf(sk),ins:Math.round((num(e.pagu)||0)*sk/100)};
 }
+let KSNAMES=[];
+async function ksNames(){
+  KSNAMES=[];
+  try{const {data}=await SB.from("employees").select("nama,jabatan,divisi").eq("cabang",$("ksCab").value).eq("status","aktif").order("nama");KSNAMES=data||[];}catch(e){}
+  const dl=document.getElementById("empNames");
+  if(dl)dl.innerHTML=KSNAMES.map(e=>`<option value="${(e.nama||"").replace(/"/g,'&quot;')}">`).join("");
+}
 async function ksLoad(){
   if(!SB)await loadSupa();
   if(!SB){ksStat("offline","#c0392b");KSDATA=[];ksRender();return;}
   ksStat("memuat…");
+  await ksNames();
   try{
     const {data,error}=await SB.from("kpi_store").select("*").eq("period_year",Y()).eq("period_month",M()).eq("usaha",$("ksUsaha").value).eq("cabang",$("ksCab").value).eq("divisi",$("ksDiv").value);
     if(error)throw error;
@@ -575,7 +584,7 @@ function ksRender(){
     :`<tr><th>NIK</th><th>Nama</th><th>Pagu</th><th>Skor KPI</th>${tail}</tr>`;
   const body=$("ksBody");body.innerHTML="";
   KSDATA.forEach((e,i)=>{const r=ksIns(e);const tr=document.createElement("tr");
-    const inp=(f,cls="")=>`<input class="${cls}" data-i="${i}" data-f="${f}" value="${e[f]??""}">`;
+    const inp=(f,cls="")=>`<input ${f==="nama"?'list="empNames"':''} class="${cls}" data-i="${i}" data-f="${f}" value="${e[f]??""}">`;
     const tailCells=`<td class="out">${r.net}</td><td><span class="badge2 g${r.grade}">${r.grade}</span></td><td class="out ins">${rupiah(r.ins)}</td>`+
       `<td><input type="checkbox" ${e.ttd?"checked":""} onchange="ksTtd(${i},this.checked)"></td>`+
       `<td style="font-size:11px;color:#6b7280">${e.ttd_date||"-"}</td>`+
@@ -595,7 +604,10 @@ function ksRenderKacab(){
   const e=KSDATA[0];const ach=e.ach||(e.ach={});
   const fin=kacabFinal(ach);const nilai=fin.final,pred=kacabPred(nilai),ins=kacabIns(nilai);
   $("ksHead").innerHTML=`<tr><th>Pilar</th><th style="text-align:left">Indikator</th><th>Bobot</th><th>Capaian %</th><th>Skor 0–110</th><th>Nilai (×bobot)</th></tr>`;
-  let rows=`<tr style="background:#eef2f8"><td colspan="6" style="text-align:left;padding:8px"><b>Nama Kepala Cabang:</b> <input id="kskNama" value="${e.nama||""}" style="width:210px;text-align:left"> &nbsp;·&nbsp; Periode ${MONTHS[M()-1]} ${Y()}</td></tr>`;
+  const kcs=KSNAMES.filter(x=>x.jabatan==="Kepala Cabang");
+  const kopts=(kcs.length?kcs:KSNAMES).map(x=>`<option ${e.nama===x.nama?"selected":""} value="${(x.nama||"").replace(/"/g,'&quot;')}">${x.nama}</option>`).join("");
+  const nmField=kopts?`<select id="kskNama" style="width:210px;text-align:left"><option value="">— pilih dari Master —</option>${kopts}</select>`:`<input id="kskNama" list="empNames" value="${e.nama||""}" style="width:210px;text-align:left">`;
+  let rows=`<tr style="background:#eef2f8"><td colspan="6" style="text-align:left;padding:8px"><b>Nama Kepala Cabang:</b> ${nmField} &nbsp;·&nbsp; Periode ${MONTHS[M()-1]} ${Y()}</td></tr>`;
   let lastP="";
   SCHEME_KACAB.forEach(it=>{const sc=bandScore(ach[it.c]);const pcell=(it.p!==lastP)?`<td style="font-size:10px;color:#1F3864;font-weight:bold;text-align:left">${it.p}</td>`:`<td></td>`;lastP=it.p;
     rows+=`<tr>${pcell}<td style="text-align:left">${it.c} ${it.n}</td><td>${it.w}%</td><td><input class="wide" data-ach="${it.c}" value="${ach[it.c]??""}"></td><td class="out">${sc}</td><td class="out">${(sc*it.w/100).toFixed(2)}</td></tr>`;});
