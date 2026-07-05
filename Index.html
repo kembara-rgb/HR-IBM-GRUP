@@ -387,7 +387,7 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-const APP_VER="2.1", APP_DATE="4 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="2.2", APP_DATE="5 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 function greet(){const h=new Date().getHours();return h<11?"pagi":h<15?"siang":h<19?"sore":"malam";}
@@ -513,8 +513,18 @@ const SCHEME_KACAB=[
   {p:"V. Audit & Kepatuhan SOP (10%)",c:"5.1",n:"Audit Score Internal",w:6},
   {p:"V. Audit & Kepatuhan SOP (10%)",c:"5.2",n:"Ketepatan Pelaporan ke Direksi",w:4}
 ];
-function bandScore(ach){ach=num(ach);if(ach==null)return 0;if(ach>=110)return 110;if(ach>=100)return 100;if(ach>=90)return 85;if(ach>=80)return 70;if(ach>=70)return 55;return 40;}
+function bandScore(ach){ach=num(ach);if(ach==null)return 0;if(ach>=110)return 110;if(ach>=100)return 100;if(ach>=90)return 85;if(ach>=80)return 70;if(ach>=70)return 55;if(ach>=50)return 40;return 0;}
 function kacabNilai(ach){let s=0;SCHEME_KACAB.forEach(it=>{s+=bandScore(ach&&ach[it.c])*it.w/100;});return +s.toFixed(1);}
+function kacabGates(ach){
+  const gv=k=>num(ach&&ach[k]);
+  const caps=[];
+  const ovd=gv("g_ovd");
+  if(ovd!=null&&ovd>0)caps.push({cap:79,why:"AR overdue UCI: "+ovd+" faktur (syarat reward UCI = 0)"});
+  const low=[["UCI",gv("g_uci")],["KG",gv("g_kg")],["GAGA",gv("g_gaga")]].filter(x=>x[1]!=null&&x[1]<90);
+  if(low.length)caps.push({cap:84,why:"Principal di bawah 90%: "+low.map(x=>x[0]+" "+x[1]+"%").join(", ")});
+  return caps;
+}
+function kacabFinal(ach){const base=kacabNilai(ach);const caps=kacabGates(ach);let f=base;caps.forEach(c=>{f=Math.min(f,c.cap);});return{base:base,final:+f.toFixed(1),caps:caps};}
 function kacabIns(n){return n>=90?2000000:n>=80?1000000:n>=70?300000:0;}
 function kacabPred(n){return n>=90?"Sangat Baik":n>=80?"Baik":n>=70?"Cukup":n>=60?"Kurang":"Sangat Kurang";}
 let KSDATA=[];
@@ -570,12 +580,19 @@ function ksRender(){
 function ksRenderKacab(){
   if(!KSDATA.length)KSDATA=[{nama:"",ach:{},ttd:false,ttd_date:"",ttd_file:""}];
   const e=KSDATA[0];const ach=e.ach||(e.ach={});
-  const nilai=kacabNilai(ach),pred=kacabPred(nilai),ins=kacabIns(nilai);
+  const fin=kacabFinal(ach);const nilai=fin.final,pred=kacabPred(nilai),ins=kacabIns(nilai);
   $("ksHead").innerHTML=`<tr><th>Pilar</th><th style="text-align:left">Indikator</th><th>Bobot</th><th>Capaian %</th><th>Skor 0–110</th><th>Nilai (×bobot)</th></tr>`;
   let rows=`<tr style="background:#eef2f8"><td colspan="6" style="text-align:left;padding:8px"><b>Nama Kepala Cabang:</b> <input id="kskNama" value="${e.nama||""}" style="width:210px;text-align:left"> &nbsp;·&nbsp; Periode ${MONTHS[M()-1]} ${Y()}</td></tr>`;
   let lastP="";
   SCHEME_KACAB.forEach(it=>{const sc=bandScore(ach[it.c]);const pcell=(it.p!==lastP)?`<td style="font-size:10px;color:#1F3864;font-weight:bold;text-align:left">${it.p}</td>`:`<td></td>`;lastP=it.p;
     rows+=`<tr>${pcell}<td style="text-align:left">${it.c} ${it.n}</td><td>${it.w}%</td><td><input class="wide" data-ach="${it.c}" value="${ach[it.c]??""}"></td><td class="out">${sc}</td><td class="out">${(sc*it.w/100).toFixed(2)}</td></tr>`;});
+  rows+=`<tr style="background:#eef2f8;font-weight:bold"><td colspan="6" style="text-align:left;color:#1F3864">GERBANG KEADILAN — diisi otomatis oleh MEDIAN dari data Orlansoft (tanpa campur tangan manusia)</td></tr>`;
+  rows+=`<tr><td></td><td style="text-align:left">G.1 Capaian omset UCI bulan ini (%)</td><td>gate</td><td><input class="wide" data-ach="g_uci" value="${ach.g_uci??""}"></td><td colspan="2" style="text-align:left;font-size:11px;color:#6b7280">tiap principal wajib ≥ 90% — jika tidak, nilai maks 84</td></tr>`;
+  rows+=`<tr><td></td><td style="text-align:left">G.2 Capaian omset Khong Guan (%)</td><td>gate</td><td><input class="wide" data-ach="g_kg" value="${ach.g_kg??""}"></td><td colspan="2"></td></tr>`;
+  rows+=`<tr><td></td><td style="text-align:left">G.3 Capaian omset GAGA (%)</td><td>gate</td><td><input class="wide" data-ach="g_gaga" value="${ach.g_gaga??""}"></td><td colspan="2"></td></tr>`;
+  rows+=`<tr><td></td><td style="text-align:left">G.4 Faktur UCI overdue akhir bulan (jumlah)</td><td>gate</td><td><input class="wide" data-ach="g_ovd" value="${ach.g_ovd??""}"></td><td colspan="2" style="text-align:left;font-size:11px;color:#6b7280">wajib 0 (syarat reward UCI) — jika ada, nilai maks 79</td></tr>`;
+  rows+=`<tr style="background:#f7f9fc"><td colspan="3" style="text-align:right">Nilai dasar (15 indikator) →</td><td>—</td><td>—</td><td class="out">${fin.base}</td></tr>`;
+  if(fin.caps.length){rows+=`<tr style="background:#fce4e4"><td colspan="6" style="text-align:left;color:#a32d2d;font-size:12px"><b>⚠ Gerbang aktif:</b> ${fin.caps.map(c=>c.why+" → nilai dibatasi "+c.cap).join(" · ")}</td></tr>`;}
   rows+=`<tr style="background:#eef5ee;font-weight:bold"><td colspan="3" style="text-align:right">NILAI AKHIR →</td><td>—</td><td>—</td><td class="out" style="font-size:15px">${nilai}</td></tr>`;
   rows+=`<tr style="background:#fff8e6;font-weight:bold"><td colspan="3" style="text-align:right">Predikat / Insentif →</td><td colspan="3" style="text-align:left"><span class="badge2 g${nilai>=90?'A':nilai>=80?'B':nilai>=70?'C':nilai>=60?'D':'E'}">${pred}</span> &nbsp; <span class="ins">Rp ${rupiah(ins)}</span></td></tr>`;
   rows+=`<tr><td colspan="3" style="text-align:right">Sudah TTD?</td><td><input type="checkbox" ${e.ttd?"checked":""} onchange="ksTtd(0,this.checked)"></td><td colspan="2" style="text-align:left;font-size:11px;color:#6b7280">${e.ttd_date||"-"}</td></tr>`;
@@ -612,7 +629,7 @@ async function ksSave(){
   let recs;
   if(ksMode()==="kacab"){
     const e=KSDATA[0]||{};if(!e.nama||!(""+e.nama).trim()){ksStat("isi Nama Kepala Cabang dulu","#c0392b");return;}
-    const nilai=kacabNilai(e.ach);
+    const nilai=kacabFinal(e.ach).final;
     recs=[{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nama:e.nama,pagu:0,skor:nilai,insentif:kacabIns(nilai),detail:e.ach||{},ttd:!!e.ttd,ttd_date:e.ttd_date||null,ttd_file:e.ttd_file||null}];
   }else{
     recs=KSDATA.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>{const r=ksIns(e);return{period_year:Y(),period_month:M(),usaha:u,cabang:c,divisi:d,nik:e.nik||null,nama:e.nama,pagu:toInt(e.pagu)||0,sales:toNum(e.sales),oa:toNum(e.oa),noo:toNum(e.noo),sku:toNum(e.sku),npd:toNum(e.npd),piutang_pt:toInt(e.piutangPt)||0,retur:toNum(e.retur),telat:toInt(e.telat),skor:toNum(e.skor),insentif:r.ins,ttd:!!e.ttd,ttd_date:e.ttd_date||null};});
