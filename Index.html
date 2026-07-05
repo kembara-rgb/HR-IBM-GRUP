@@ -121,6 +121,14 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
 .userchip{font-size:12px;color:var(--dim)}
 .logoutbtn{font-size:12px;padding:5px 10px;border:1px solid var(--line2);border-radius:7px;background:var(--panel);color:var(--dim);cursor:pointer;margin-left:8px}
 .logoutbtn:hover{color:var(--cream)}
+/* ===== FAB KONTEKS ===== */
+#ctxFab{display:none;position:fixed;right:18px;bottom:24px;z-index:190;width:56px;height:56px;border-radius:50%;background:var(--gold);color:#122B45;border:none;font-size:22px;font-weight:bold;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.45)}
+#ctxFab:hover{background:#d9a52e}
+#ctxPanel{display:none;position:fixed;right:18px;bottom:90px;z-index:191;background:var(--dk);border:1px solid var(--line2);border-radius:16px;padding:16px;width:270px}
+#ctxPanel label{display:block;font-size:10px;letter-spacing:1px;color:var(--dim);margin:8px 0 3px;text-transform:uppercase}
+#ctxPanel select{width:100%;padding:8px;border-radius:8px;border:1px solid var(--line2);background:var(--panel);color:var(--cream);font-size:13px}
+#ctxPanel .cbtn{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:none;font-size:13px;font-weight:bold;cursor:pointer}
+@media(max-width:760px){#ctxFab{bottom:88px}#ctxPanel{bottom:154px}}
 /* ===== SPLASH KELPIE ===== */
 #splash{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;transition:opacity .5s}
 #splash.hide{opacity:0;pointer-events:none}
@@ -367,6 +375,17 @@ summary{cursor:pointer;font-weight:bold;color:var(--navy)}details ul{margin:8px 
   <div class="bi" id="bi-payroll" onclick="go('payroll')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>Gaji</div>
 </div>
 <datalist id="empNames"></datalist>
+<button id="ctxFab" onclick="ctxToggle()" title="Pilih Usaha / Cabang / Divisi / PIC" aria-label="Pilih konteks">☰</button>
+<div id="ctxPanel">
+  <div style="font-size:12px;font-weight:bold;color:var(--gold);letter-spacing:1px">PILIH KONTEKS</div>
+  <label>Usaha</label><select id="fUsaha" onchange="ctxUsaha()"></select>
+  <label>Cabang</label><select id="fCab" onchange="ctxCab()"></select>
+  <label>Divisi / Bagian</label><select id="fDiv" onchange="ctxDiv()"></select>
+  <label>Nama PIC</label><select id="fPic"></select>
+  <button class="cbtn" style="background:var(--gold);color:#122B45" onclick="ctxGoKpi()">📝 Buka Form KPI-nya</button>
+  <button class="cbtn" style="background:#1F3864;color:#fff" onclick="ctxGoRiwayat()">📚 Riwayat KPI PIC</button>
+  <button class="cbtn" style="background:var(--panel);color:#e07856;border:1px solid var(--line2)" onclick="ctxClear()">🧹 Bersihkan</button>
+</div>
 <div id="cpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);align-items:center;justify-content:center;z-index:200">
   <div style="background:#fff;border-radius:12px;padding:22px;width:330px;max-width:90%">
     <div style="font-weight:bold;color:#1F3864;font-size:15px;margin-bottom:12px">Ganti Password</div>
@@ -400,7 +419,7 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-const APP_VER="2.5", APP_DATE="5 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="2.6", APP_DATE="5 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 function greet(){const h=new Date().getHours();return h<11?"pagi":h<15?"siang":h<19?"sore":"malam";}
@@ -544,9 +563,9 @@ function kacabPred(n){return n>=90?"Sangat Baik":n>=80?"Baik":n>=70?"Cukup":n>=6
 let KSDATA=[];
 function ksStat(t,c){const s=$("ksStatus");if(s){s.textContent=t;s.style.color=c||"#8b949e";}}
 function ksMode(){const u=$("ksUsaha"),d=$("ksDiv");const dv=d?d.value:"";if(dv==="KACAB")return"kacab";return isFull(u?u.value:"", dv)?"full":"simple";}
-function ksInit(){const u=$("ksUsaha");if(!u)return;u.innerHTML=Object.keys(USAHA).map(k=>`<option value="${k}">${k} — ${USAHA[k].label}</option>`).join("");ksUsahaChange();}
-function ksUsahaChange(){const u=$("ksUsaha").value;$("ksCab").innerHTML=Object.keys(USAHA[u].cabang).map(c=>`<option>${c}</option>`).join("");ksCabChange();}
-function ksCabChange(){const u=$("ksUsaha").value,c=$("ksCab").value;$("ksDiv").innerHTML=(USAHA[u].cabang[c]||[]).map(d=>`<option>${d}</option>`).join("");ksLoad();}
+function ksInit(){const u=$("ksUsaha");if(!u)return;u.innerHTML=Object.keys(USAHA).map(k=>`<option value="${k}">${k} — ${USAHA[k].label}</option>`).join("");if(GCTX&&GCTX.u)u.value=GCTX.u;ksUsahaChange();}
+function ksUsahaChange(){const u=$("ksUsaha").value;$("ksCab").innerHTML=Object.keys(USAHA[u].cabang).map(c=>`<option>${c}</option>`).join("");if(GCTX&&GCTX.c)$("ksCab").value=GCTX.c;ksCabChange();}
+function ksCabChange(){const u=$("ksUsaha").value,c=$("ksCab").value;$("ksDiv").innerHTML=(USAHA[u].cabang[c]||[]).map(d=>`<option>${d}</option>`).join("");if(GCTX&&GCTX.d)$("ksDiv").value=GCTX.d;ksLoad();}
 function ksIns(e){
   if(ksMode()==="full")return compute({tipe:"GT",pagu:e.pagu,sales:e.sales,oa:e.oa,noo:e.noo,sku:e.sku,npd:e.npd,piutangPt:e.piutangPt,retur:e.retur,telat:e.telat});
   const sk=num(e.skor)||0;return{net:+sk.toFixed(1),grade:gradeOf(sk),ins:Math.round((num(e.pagu)||0)*sk/100)};
@@ -566,7 +585,7 @@ async function ksLoad(){
   try{
     const {data,error}=await SB.from("kpi_store").select("*").eq("period_year",Y()).eq("period_month",M()).eq("usaha",$("ksUsaha").value).eq("cabang",$("ksCab").value).eq("divisi",$("ksDiv").value);
     if(error)throw error;
-    if(ksMode()==="kacab"){const d0=(data||[])[0];KSDATA=[{nama:d0?d0.nama:"",ach:(d0&&d0.detail)||{},ttd:!!(d0&&d0.ttd),ttd_date:(d0&&d0.ttd_date)||"",ttd_file:(d0&&d0.ttd_file)||""}];}
+    if(ksMode()==="kacab"){const d0=(data||[])[0];KSDATA=[{nama:d0?d0.nama:"",ach:(d0&&d0.detail)||{},ttd:!!(d0&&d0.ttd),ttd_date:(d0&&d0.ttd_date)||"",ttd_file:(d0&&d0.ttd_file)||""}];if(GCTX&&GCTX.pic&&!KSDATA[0].nama)KSDATA[0].nama=GCTX.pic;GCTX=null;}
     else KSDATA=(data||[]).map(d=>({nik:d.nik||"",nama:d.nama||"",pagu:d.pagu||0,sales:d.sales??"",oa:d.oa??"",noo:d.noo??"",sku:d.sku??"",npd:d.npd??"",piutangPt:d.piutang_pt??0,retur:d.retur??"",telat:d.telat??"",skor:d.skor??"",ttd:!!d.ttd,ttd_date:d.ttd_date||""}));
     ksStat("tersinkron","#1d9e75");
   }catch(e){ksStat("offline — pastikan tabel 'kpi_store' sudah dibuat","#c0392b");KSDATA=[];}
@@ -728,6 +747,40 @@ async function rwLoad(){
   if(!rows.length)tb.innerHTML='<tr><td colspan="9" style="text-align:left;padding:12px;color:#6b7280">Tidak ada arsip. Pastikan KPI-nya sudah di-Save di modul Simpan KPI Karyawan.</td></tr>';
   const rc=$("rwCards");
   if(rc)rc.innerHTML=card("Jumlah Arsip",n,"")+card("Rata-rata Skor",n?(sum/n).toFixed(1):"—","")+card("Terbaru",rows.length?(MONTHS[(rows[0].period_month||1)-1]+" "+rows[0].period_year):"—","","16px");
+}
+/* ===== FAB KONTEKS (Usaha→Cabang→Divisi→PIC) ===== */
+let GCTX=null;
+function ctxToggle(){const p=$("ctxPanel");if(!p)return;const open=p.style.display==="block";p.style.display=open?"none":"block";if(!open&&!$("fUsaha").options.length)ctxBuild();}
+function ctxBuild(){$("fUsaha").innerHTML=Object.keys(USAHA).map(k=>`<option value="${k}">${k} — ${USAHA[k].label}</option>`).join("");ctxUsaha();}
+function ctxUsaha(){const u=$("fUsaha").value;$("fCab").innerHTML=Object.keys(USAHA[u].cabang).map(c=>`<option>${c}</option>`).join("");ctxCab();}
+function ctxCab(){const u=$("fUsaha").value,c=$("fCab").value;$("fDiv").innerHTML=(USAHA[u].cabang[c]||[]).map(d=>`<option>${d}</option>`).join("");ctxDiv();}
+async function ctxDiv(){
+  const c=$("fCab").value,d=$("fDiv").value;
+  const pic=$("fPic");pic.innerHTML='<option value="">memuat…</option>';
+  if(!SB)await loadSupa();
+  let list=[];
+  try{const {data}=await SB.from("employees").select("nama,jabatan,divisi").eq("cabang",c).eq("status","aktif").order("nama");list=data||[];}catch(e){}
+  let opts=list;
+  if(d==="KACAB")opts=list.filter(x=>x.jabatan==="Kepala Cabang");
+  else{const f=list.filter(x=>(x.divisi||"")===d);if(f.length)opts=f;}
+  pic.innerHTML='<option value="">— pilih PIC —</option>'+opts.map(x=>`<option value="${(x.nama||"").replace(/"/g,'&quot;')}">${x.nama}${x.jabatan?" · "+x.jabatan:""}</option>`).join("");
+}
+function ctxGoKpi(){
+  GCTX={u:$("fUsaha").value,c:$("fCab").value,d:$("fDiv").value,pic:$("fPic").value};
+  $("ctxPanel").style.display="none";
+  go("kpistore");
+}
+function ctxGoRiwayat(){
+  const pic=$("fPic").value;
+  $("ctxPanel").style.display="none";
+  go("riwayat");
+  if(pic){const r=$("rwName");if(r){r.value=pic;rwLoad();}}
+}
+function ctxClear(){
+  GCTX=null;
+  const u=$("fUsaha");if(u&&u.options.length){u.selectedIndex=0;ctxUsaha();}
+  const r=$("rwName");if(r)r.value="";
+  const p=$("ctxPanel");if(p)p.style.display="none";
 }
 /* pengait Master: nama → employee_id */
 let EMPIDX=null;
@@ -989,6 +1042,7 @@ function showApp(){
   document.getElementById('authScreen').style.display='none';
   document.getElementById('appRoot').style.display='flex';
   const w=document.getElementById('whoami');if(w)w.textContent=CURRENT.username+' · '+(CURRENT.role==='admin'?'Admin':'Pengguna');
+  const fb=document.getElementById('ctxFab');if(fb)fb.style.display='block';
   buildNav();go('dashboard');
   const DEF=['240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9','74b8544b3e0a87d17a43e30788261671ac3bc28ef3352a38ac6aa8176a0e96e7'];
   if(DEF.indexOf(CURRENT.password_hash)>=0){setTimeout(function(){alert('Demi keamanan, segera ganti password Anda lewat tombol "Ganti Password" di kanan atas.');},600);}
@@ -1010,7 +1064,7 @@ async function doChangePw(){
     CURRENT.password_hash=hNew;cpMsg('Password berhasil diganti!','#1d9e75');setTimeout(closeChangePw,1200);
   }catch(e){cpMsg('Gagal menyimpan. Coba lagi.');}
 }
-function logout(){localStorage.removeItem('hig_user');CURRENT=null;document.getElementById('appRoot').style.display='none';document.getElementById('authScreen').style.display='flex';authTab('login');const ap=document.getElementById('au_pass');if(ap)ap.value='';}
+function logout(){localStorage.removeItem('hig_user');CURRENT=null;document.getElementById('appRoot').style.display='none';document.getElementById('authScreen').style.display='flex';authTab('login');const ap=document.getElementById('au_pass');if(ap)ap.value='';const fb=document.getElementById('ctxFab');if(fb)fb.style.display='none';const cp=document.getElementById('ctxPanel');if(cp)cp.style.display='none';}
 async function checkSession(){
   const raw=localStorage.getItem('hig_user');
   try{
