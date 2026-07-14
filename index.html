@@ -1739,3 +1739,104 @@ setelah patch v2.7 kemarin → Commit changes):
   setTimeout(function(){ pasangView(); aktifkanModul(); datalistNama('dlNama'); }, 1200);
 })();
 </script>
+
+<script>
+/* ============================================================
+   PATCH v3.1 — Tampilan bersih: grid ikon + tombol Home
+   (14 Jul 2026 — MEDIAN)
+   ============================================================ */
+(function(){
+  var CSS = ''
+  + '.hig-wrap{padding:4px 0 24px}'
+  + '.hig-hi{margin:2px 0 18px}'
+  + '.hig-hi h2{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}'
+  + '.hig-hi p{margin:3px 0 0;font-size:12px;opacity:.62}'
+  + '.hig-sec{margin:22px 0 10px;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;opacity:.5;font-weight:700}'
+  + '.hig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px}'
+  + '@media(min-width:760px){.hig-grid{grid-template-columns:repeat(6,1fr);gap:18px 8px}}'
+  + '.hig-it{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;padding:4px 2px;border-radius:12px;transition:transform .12s,background .12s;-webkit-tap-highlight-color:transparent}'
+  + '.hig-it:active{transform:scale(.94)}'
+  + '.hig-it:hover{background:rgba(231,181,60,.07)}'
+  + '.hig-ic{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:23px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);box-shadow:0 1px 3px rgba(0,0,0,.18)}'
+  + '.hig-it:hover .hig-ic{border-color:rgba(231,181,60,.55)}'
+  + '.hig-tx{font-size:10.5px;line-height:1.25;text-align:center;opacity:.9;max-width:74px}'
+  + '.hig-lock .hig-ic{opacity:.32;filter:grayscale(1)}'
+  + '.hig-lock .hig-tx{opacity:.42}'
+  + '.hig-dot{position:absolute;margin:-52px 0 0 34px;width:7px;height:7px;border-radius:50%;background:#E7B53C}'
+  + '.hig-home{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);cursor:pointer;font-size:16px;margin-right:8px}'
+  + '.hig-home:hover{border-color:#E7B53C}';
+  var st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
+
+  var GRUP = [
+    {k:'utama', t:'Utama'},
+    {k:'data',  t:'Data & Karyawan'},
+    {k:'ops',   t:'Operasional HR'},
+    {k:'komp',  t:'Kompensasi & Dokumen'}
+  ];
+
+  function gridHTML(){
+    var nama = (CURRENT && CURRENT.username) ? CURRENT.username : '';
+    var sapa = (typeof greet === 'function') ? greet() : '';
+    var h = '<div class="hig-wrap">'
+          + '<div class="hig-hi"><h2>Selamat ' + sapa + (nama ? ', ' + nama : '') + '</h2>'
+          + '<p>Ketuk ikon untuk membuka modul.</p></div>';
+    GRUP.forEach(function(g){
+      var list = MODULES.filter(function(m){
+        if(m.id === 'dashboard') return false;
+        if(m.admin && !(CURRENT && CURRENT.role === 'admin')) return false;
+        return m.grp === g.k;
+      });
+      if(!list.length) return;
+      h += '<div class="hig-sec">' + g.t + '</div><div class="hig-grid">';
+      list.forEach(function(m){
+        var lock = (m.status !== 'aktif');
+        h += '<div class="hig-it' + (lock ? ' hig-lock' : '') + '" onclick="go(\'' + m.id + '\')" title="' + (m.desc || '').replace(/"/g,'') + '">'
+           + '<div class="hig-ic">' + m.ic + '</div>'
+           + (lock ? '' : '<div class="hig-dot"></div>')
+           + '<div class="hig-tx">' + m.name + '</div>'
+           + '</div>';
+      });
+      h += '</div>';
+    });
+    h += '</div>';
+    return h;
+  }
+
+  function pasangHome(){
+    var top = document.querySelector('.top');
+    if(!top || document.getElementById('higHome')) return;
+    var b = document.createElement('button');
+    b.id = 'higHome'; b.className = 'hig-home'; b.title = 'Kembali ke Beranda';
+    b.textContent = '🏠';
+    b.onclick = function(){ go('dashboard'); };
+    var h1 = top.querySelector('h1');
+    top.insertBefore(b, h1 || top.firstChild);
+  }
+
+  function render(){
+    var v = document.getElementById('view-dashboard');
+    if(!v || typeof MODULES === 'undefined') return;
+    v.innerHTML = gridHTML();
+    pasangHome();
+    var hb = document.getElementById('higHome');
+    if(hb) hb.style.display = 'none';
+  }
+
+  var _go = window.go;
+  window.go = function(id){
+    _go(id);
+    pasangHome();
+    var hb = document.getElementById('higHome');
+    if(hb) hb.style.display = (id === 'dashboard') ? 'none' : 'inline-flex';
+    if(id === 'dashboard') render();
+  };
+
+  var _showApp = window.showApp;
+  window.showApp = function(){
+    _showApp();
+    setTimeout(render, 250);
+  };
+
+  setTimeout(function(){ pasangHome(); render(); }, 1400);
+})();
+</script>
