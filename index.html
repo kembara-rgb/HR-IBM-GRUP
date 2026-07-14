@@ -1158,3 +1158,93 @@ async function ksSave(){
   catch(e){ksStat("gagal — pastikan kolom 'detail' & 'ttd_file' sudah dibuat","#c0392b");}
 }
 </script>
+
+<script>
+/* ============================================================
+   PATCH v2.7 — Kolom EMAIL di Master Data Karyawan
+   Tempel blok ini TEPAT SEBELUM baris </body> di index.html
+   (14 Jul 2026 — MEDIAN)
+   ============================================================ */
+(function(){
+  function hdrEmail(){
+    const tb=document.getElementById('empBody'); if(!tb) return;
+    const tr=tb.closest('table').querySelector('thead tr');
+    if(!tr || tr.dataset.em) return;
+    const th=document.createElement('th'); th.textContent='Email';
+    tr.insertBefore(th, tr.children[8]);  /* sebelum kolom Status */
+    tr.dataset.em='1';
+  }
+
+  window.empLoad = async function(){
+    if(!SB) await loadSupa();
+    if(!SB){ empStat("offline","#c0392b"); EMP=[]; empRender(); return; }
+    empStat("memuat…");
+    try{
+      const {data,error}=await SB.from("employees").select("*").order("cabang").order("nama");
+      if(error) throw error;
+      EMP=(data||[]).map(d=>({id:d.id,nik:d.nik||"",nama:d.nama||"",usaha:d.usaha||"IBM-GRUP",cabang:d.cabang||"",divisi:d.divisi||"",jabatan:d.jabatan||"",spv:d.spv||"",hp:d.hp||"",email:d.email||"",status:d.status||"aktif"}));
+      empStat("tersinkron — "+EMP.length+" karyawan","#1d9e75");
+    }catch(e){ empStat("offline — jalankan SQL kolom email dulu","#c0392b"); EMP=[]; }
+    empRender();
+  };
+
+  window.empAdd = function(){
+    EMP.push({nik:"",nama:"",usaha:"IBM-GRUP",cabang:"Bandar Lampung",divisi:"",jabatan:"",spv:"",hp:"",email:"",status:"aktif"});
+    empRender();
+  };
+
+  window.empRender = function(){
+    hdrEmail();
+    const tb=$("empBody"); if(!tb) return; tb.innerHTML="";
+    const q=($("empSearch")?$("empSearch").value:"").trim().toLowerCase();
+    const nikCount={}; EMP.forEach(e=>{const k=(e.nik||"").trim(); if(k)nikCount[k]=(nikCount[k]||0)+1;});
+    let shown=0;
+    EMP.forEach((e,i)=>{
+      if(q && !((e.nama||"").toLowerCase().includes(q)||(e.nik||"").toLowerCase().includes(q))) return;
+      shown++;
+      const dup=e.nik && nikCount[(e.nik||"").trim()]>1;
+      const tr=document.createElement("tr");
+      const inp=(f,w)=>`<input style="width:${w||90}px;text-align:left" data-i="${i}" data-f="${f}" value="${(e[f]??"").toString().replace(/"/g,'&quot;')}">`;
+      const su=`<select data-i="${i}" data-f="usaha">`+Object.keys(USAHA).map(u=>`<option ${e.usaha===u?"selected":""}>${u}</option>`).join("")+`</select>`;
+      const cabs=USAHA[e.usaha]?Object.keys(USAHA[e.usaha].cabang):[];
+      const sc=`<select data-i="${i}" data-f="cabang">`+(cabs.includes(e.cabang)?"":`<option selected>${e.cabang||"—"}</option>`)+cabs.map(c=>`<option ${e.cabang===c?"selected":""}>${c}</option>`).join("")+`</select>`;
+      const st=`<select data-i="${i}" data-f="status"><option ${e.status==="aktif"?"selected":""}>aktif</option><option ${e.status==="nonaktif"?"selected":""}>nonaktif</option></select>`;
+      tr.innerHTML=`<td${dup?' style="background:#fce4e4"':''}>${inp("nik",70)}${dup?' <span title="NIK ganda" style="color:#c0392b;font-weight:bold">!</span>':''}</td>`+
+        `<td class="name">${inp("nama",130)}</td><td>${su}</td><td>${sc}</td><td>${inp("divisi",100)}</td><td>${inp("jabatan",100)}</td><td>${inp("spv",90)}</td><td>${inp("hp",100)}</td><td>${inp("email",160)}</td><td>${st}</td>`+
+        `<td><button class="del" onclick="empDel(${i})">×</button></td>`;
+      tb.appendChild(tr);
+    });
+    if(!shown) tb.innerHTML='<tr><td colspan="11" style="text-align:left;padding:12px;color:#6b7280">Belum ada data. Klik <b>⤵ Tarik dari KPI (v1)</b> untuk mengimpor karyawan yang sudah pernah diinput.</td></tr>';
+    tb.querySelectorAll("input[data-f],select[data-f]").forEach(el=>el.addEventListener("change",ev=>{const i=+ev.target.dataset.i,f=ev.target.dataset.f;EMP[i][f]=ev.target.value;empRender();}));
+    const ec=$("empCards");
+    if(ec){const akt=EMP.filter(e=>e.status!=="nonaktif").length;
+      const dups=Object.values(EMP.reduce((a,e)=>{const k=(e.nik||"").trim();if(k)a[k]=(a[k]||0)+1;return a;},{})).filter(n=>n>1).length;
+      const mail=EMP.filter(e=>(e.email||"").includes("@")).length;
+      ec.innerHTML=card("Total Karyawan",EMP.length,"")+card("Aktif",akt,"")+card("Ber-Email",mail,"")+card("NIK Ganda",dups,dups?"⚠":"");}
+  };
+
+  window.empSave = async function(){
+    if(!SB) await loadSupa();
+    if(!SB){ empStat("offline — tidak tersimpan","#c0392b"); return; }
+    const recs=EMP.filter(e=>e.nama&&(""+e.nama).trim()).map(e=>({nik:e.nik||null,nama:(""+e.nama).trim(),usaha:e.usaha||"IBM-GRUP",cabang:e.cabang||"",divisi:e.divisi||null,jabatan:e.jabatan||null,spv:e.spv||null,hp:e.hp||null,email:((e.email||"").trim())||null,status:e.status||"aktif"}));
+    if(!recs.length){ empStat("tidak ada data terisi"); return; }
+    empStat("menyimpan…");
+    try{
+      const {error}=await SB.from("employees").upsert(recs,{onConflict:"usaha,cabang,nama"});
+      if(error) throw error;
+      empStat("tersimpan ✓ — "+recs.length+" karyawan","#1d9e75");
+      empLoad();
+    }catch(e){ empStat("gagal — pastikan kolom email sudah ditambahkan (SQL)","#c0392b"); }
+  };
+
+  window.empCSV = function(){
+    const head=["NIK","Nama","Usaha","Cabang","Divisi","Jabatan","SPV","HP","Email","Status"];
+    const rows=EMP.map(e=>[e.nik,e.nama,e.usaha,e.cabang,e.divisi,e.jabatan,e.spv,e.hp,e.email,e.status]);
+    const csv=[head,...rows].map(r=>r.map(c=>`"${c??""}"`).join(",")).join("\n");
+    const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");
+    a.href=URL.createObjectURL(b);a.download="Master_Karyawan.csv";a.click();
+  };
+
+  if(document.getElementById('empBody')) hdrEmail();
+})();
+</script>
