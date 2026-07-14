@@ -2053,3 +2053,141 @@ setelah patch v2.7 kemarin → Commit changes):
   setTimeout(function(){ pasang(); render(''); bersihkanTeksLiar(); }, 1500);
 })();
 </script>
+
+<script>
+/* ============================================================
+   PATCH v4.1 — Rapikan Beranda Ikon (MEDIAN, 14 Jul 2026)
+   Tempel di baris PALING BAWAH index.html, setelah v4.0.
+   ============================================================ */
+(function(){
+  var VER = 'v4.1 · 14 Jul 2026';
+
+  var ICO = {
+    median:'dog', kpi:'coin', kpistore:'file-check', riwayat:'history',
+    users:'user-shield', master:'users', selfservice:'id', karir:'stairs-up',
+    struktur:'sitemap', absensi:'fingerprint', kontrak:'file-text',
+    disiplin:'alert-triangle', payroll:'wallet', dokumen:'stamp',
+    laporan:'bell'
+  };
+
+  var NAMA = {
+    median:'Median', kpi:'Insentif', kpistore:'Simpan KPI', riwayat:'Riwayat KPI',
+    users:'Pengguna', master:'Karyawan', selfservice:'Self-Service', karir:'Karir',
+    struktur:'Struktur', absensi:'Absensi', kontrak:'Kontrak',
+    disiplin:'Disiplin', payroll:'Gaji', dokumen:'Dokumen', laporan:'Laporan'
+  };
+
+  var GRUP = [
+    {t:'Utama',                 ids:['median','kpistore','riwayat','kpi']},
+    {t:'Data & Karyawan',       ids:['master','users','selfservice','struktur']},
+    {t:'Operasional HR',        ids:['absensi','kontrak','disiplin','karir']},
+    {t:'Kompensasi & Dokumen',  ids:['payroll','dokumen','laporan']}
+  ];
+
+  var CSS = ''
+  + '.m41{padding:2px 0 28px}'
+  + '.m41 h2{margin:0;font-size:18px;font-weight:600;color:#F2F4F7;letter-spacing:.2px}'
+  + '.m41-sub{margin:3px 0 14px;font-size:11.5px;color:#8FA3BC}'
+  + '.m41-cari{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:9px 11px}'
+  + '.m41-cari input{flex:1;background:transparent;border:0;outline:0;color:#F2F4F7;font-size:13px;padding:0;width:100%}'
+  + '.m41-sec{margin:20px 0 10px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#7C8FA8;font-weight:700}'
+  + '.m41-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 4px}'
+  + '@media(min-width:760px){.m41-grid{grid-template-columns:repeat(6,1fr);gap:20px 8px}}'
+  + '.m41-it{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s}'
+  + '.m41-it:active{transform:scale(.93)}'
+  + '.m41-ic{position:relative;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#C9D4E2}'
+  + '.m41-it:hover .m41-ic{border-color:rgba(231,181,60,.5)}'
+  + '.m41-dot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#E7B53C}'
+  + '.m41-tx{font-size:10px;line-height:1.2;text-align:center;color:#C9D4E2;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+  + '.m41-off .m41-ic{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06);color:#5B6B7E}'
+  + '.m41-off .m41-tx{color:#5B6B7E}'
+  + '.m41-home{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1px solid rgba(231,181,60,.4);background:rgba(231,181,60,.13);color:#E7B53C;cursor:pointer;font-size:17px;margin-right:8px;flex:none}'
+  + '.top{flex-wrap:nowrap!important;gap:6px!important;align-items:center!important}'
+  + '.top h1{font-size:16px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+  + '.top button{font-size:11px!important;padding:5px 9px!important;white-space:nowrap}'
+  + '#m4Ver,#whoami{font-size:10px!important;white-space:nowrap;color:#8FA3BC!important}';
+  var st=document.createElement('style'); st.id='m41css'; st.textContent=CSS; document.head.appendChild(st);
+
+  function cari(id){
+    for(var i=0;i<MODULES.length;i++) if(MODULES[i].id===id) return MODULES[i];
+    return null;
+  }
+
+  function gridHTML(q){
+    q=(q||'').toLowerCase();
+    var nama=(CURRENT&&CURRENT.username)?CURRENT.username:'';
+    var sapa=(typeof greet==='function')?greet():'datang';
+    var h='<div class="m41"><h2>Selamat '+sapa+(nama?', '+nama:'')+'</h2>'
+        + '<div class="m41-sub">Ketuk ikon untuk membuka modul · '+VER+'</div>'
+        + '<div class="m41-cari"><i class="ti ti-search"></i>'
+        + '<input id="m41Cari" placeholder="Cari modul…" autocomplete="off" value="'+q.replace(/"/g,'')+'"></div>';
+    var ada=0;
+    GRUP.forEach(function(g){
+      var list=[];
+      g.ids.forEach(function(id){
+        var m=cari(id); if(!m) return;
+        if(m.admin && !(CURRENT && CURRENT.role==='admin')) return;
+        var label=NAMA[id]||m.name;
+        if(q && label.toLowerCase().indexOf(q)<0) return;
+        list.push({m:m,label:label});
+      });
+      if(!list.length) return;
+      ada+=list.length;
+      h+='<div class="m41-sec">'+g.t+'</div><div class="m41-grid">';
+      list.forEach(function(x){
+        var on=(x.m.status==='aktif');
+        h+='<div class="m41-it '+(on?'':'m41-off')+'" onclick="go(\''+x.m.id+'\')" title="'+x.m.name+'">'
+          +'<div class="m41-ic"><i class="ti ti-'+(ICO[x.m.id]||'circle')+'"></i>'+(on?'<span class="m41-dot"></span>':'')+'</div>'
+          +'<div class="m41-tx">'+x.label+'</div></div>';
+      });
+      h+='</div>';
+    });
+    if(!ada) h+='<div style="color:#7C8FA8;font-size:12px;padding:18px 0">Modul tidak ditemukan.</div>';
+    h+='</div>';
+    return h;
+  }
+
+  function render(q){
+    var v=document.getElementById('view-dashboard');
+    if(!v || typeof MODULES==='undefined') return;
+    v.innerHTML=gridHTML(q);
+    var c=document.getElementById('m41Cari');
+    if(c) c.oninput=function(){ var val=this.value; render(val); var n=document.getElementById('m41Cari'); if(n){n.focus(); n.setSelectionRange(val.length,val.length);} };
+    pasang();
+    var hb=document.getElementById('m41Home'); if(hb) hb.style.display='none';
+  }
+
+  function pasang(){
+    var top=document.querySelector('.top'); if(!top) return;
+    if(!document.getElementById('m41Home')){
+      var b=document.createElement('button');
+      b.id='m41Home'; b.className='m41-home'; b.title='Beranda';
+      b.innerHTML='<i class="ti ti-home"></i>';
+      b.onclick=function(){ go('dashboard'); };
+      top.insertBefore(b, top.firstChild);
+    }
+    ['higHome','m4Home','m4Ver'].forEach(function(id){
+      var e=document.getElementById(id); if(e) e.style.display='none';
+    });
+    document.querySelectorAll('.fab,.menu-fab,#fab,#menuFab').forEach(function(e){ e.style.display='none'; });
+  }
+
+  var _go=window.go;
+  window.go=function(id){
+    _go(id);
+    pasang();
+    var hb=document.getElementById('m41Home');
+    if(hb) hb.style.display=(id==='dashboard')?'none':'inline-flex';
+    if(id==='dashboard') render('');
+  };
+
+  setInterval(function(){
+    var v=document.getElementById('view-dashboard');
+    if(!v || v.style.display==='none') return;
+    if(!v.querySelector('.m41-grid')) render('');
+    pasang();
+  },1200);
+
+  setTimeout(function(){ pasang(); render(''); },1200);
+})();
+</script>
