@@ -1310,4 +1310,81 @@ setelah patch v2.7 kemarin → Commit changes):
   }
 })();
 </script>
-------------------------------------------------------
+
+<script>
+/* ============================================================
+   PATCH v2.9 — Riwayat KPI: autocomplete nama + Kirim Email/WA
+   Tempel di baris PALING BAWAH index.html (setelah patch v2.8)
+   (14 Jul 2026 — MEDIAN)
+   ============================================================ */
+(function(){
+  async function rwContacts(nama){
+    try{
+      if(!SB) await loadSupa();
+      const {data}=await SB.from('employees').select('nama,email,hp').ilike('nama','%'+nama+'%').limit(1);
+      return (data&&data[0])||null;
+    }catch(e){ return null; }
+  }
+  async function rwFillList(){
+    try{
+      if(document.getElementById('rwList')) return;
+      if(!SB) await loadSupa(); if(!SB) return;
+      const {data}=await SB.from('employees').select('nama').order('nama');
+      const dl=document.createElement('datalist'); dl.id='rwList';
+      dl.innerHTML=(data||[]).map(function(e){return '<option value="'+((e.nama||'')+'').replace(/"/g,'&quot;')+'">';}).join('');
+      document.body.appendChild(dl);
+      const inp=document.getElementById('rwName'); if(inp) inp.setAttribute('list','rwList');
+    }catch(e){}
+  }
+  function ringkas(){
+    const rows=(window.RWROWS||[]).slice(0,6);
+    if(!rows.length) return '';
+    let t='KPI a.n. '+rows[0].nama+' — PT Inti Bharu Mas\n\n';
+    rows.forEach(function(d){
+      const sk=(d.skor!=null)?d.skor:'-';
+      const ins=(d.insentif!=null)?d.insentif:0;
+      t+='• '+MONTHS[(d.period_month||1)-1]+' '+d.period_year+': skor '+sk+', insentif '+rupiah(ins)+(d.ttd?' (sudah TTD)':' (belum TTD)')+'\n';
+    });
+    t+='\nDikirim otomatis dari aplikasi HR IBM GRUP.';
+    return t;
+  }
+  var _rwLoad=window.rwLoad;
+  window.rwLoad=async function(){
+    await _rwLoad.apply(this,arguments);
+    var view=document.getElementById('view-riwayat'); if(!view) return;
+    var bar=document.getElementById('rwSendBar');
+    if(!bar){
+      bar=document.createElement('div'); bar.id='rwSendBar';
+      bar.style.cssText='margin:10px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+      var tw=view.querySelector('.tablewrap'); view.insertBefore(bar,tw);
+    }
+    bar.innerHTML='';
+    var rows=window.RWROWS||[]; if(!rows.length) return;
+    var c=await rwContacts(rows[0].nama);
+    var enc=encodeURIComponent(ringkas());
+    if(c&&c.email){
+      var a=document.createElement('a');
+      a.textContent='📧 Kirim Email';
+      a.href='mailto:'+c.email+'?subject='+encodeURIComponent('KPI & Insentif — '+rows[0].nama)+'&body='+enc;
+      a.style.cssText='background:#122B45;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px';
+      bar.appendChild(a);
+    }
+    if(c&&c.hp){
+      var no=(''+c.hp).replace(/\D/g,''); if(no.indexOf('0')===0) no='62'+no.slice(1);
+      var w=document.createElement('a');
+      w.textContent='🟢 Kirim WhatsApp';
+      w.href='https://wa.me/'+no+'?text='+enc; w.target='_blank';
+      w.style.cssText='background:#1d9e75;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px';
+      bar.appendChild(w);
+    }
+    if(!c||(!c.email&&!c.hp)){
+      var s=document.createElement('span');
+      s.style.cssText='font-size:12px;color:#ba7517';
+      s.textContent='Email/No. HP karyawan ini belum ada di Master Data Karyawan — lengkapi dulu agar tombol kirim muncul.';
+      bar.appendChild(s);
+    }
+    rwFillList();
+  };
+  setTimeout(rwFillList,1500);
+})();
+</script>
