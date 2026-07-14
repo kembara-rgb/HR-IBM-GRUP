@@ -1840,3 +1840,53 @@ setelah patch v2.7 kemarin → Commit changes):
   setTimeout(function(){ pasangHome(); render(); }, 1400);
 })();
 </script>
+
+<script>
+/* ============================================================
+   PATCH v3.2 — Paksa tampilan grid + label versi
+   (14 Jul 2026 — MEDIAN)
+   ============================================================ */
+(function(){
+  function setVer(){
+    var f = document.getElementById('appFoot');
+    if(f) f.innerHTML = 'v3.2 · 14 Jul 2026<br>Modul aktif: ' +
+      (typeof MODULES!=='undefined' ? MODULES.filter(function(m){return m.status==='aktif'&&!m.admin;}).length : '-') + '/12 · Pilot';
+    var b = document.querySelector('.brand span');
+    if(b && b.textContent.indexOf('v3.2')<0) b.textContent = 'PT Inti Bharu Mas · v3.2';
+  }
+  function paksaGrid(){
+    var v = document.getElementById('view-dashboard');
+    if(!v || typeof MODULES === 'undefined') return;
+    if(!v.classList.contains('show')) return;
+    if(v.querySelector('.hig-grid')) return;   /* sudah grid */
+    if(typeof window.__higRender === 'function'){ window.__higRender(); return; }
+    /* fallback: bangun grid sendiri */
+    var GRUP=[{k:'utama',t:'Utama'},{k:'data',t:'Data & Karyawan'},{k:'ops',t:'Operasional HR'},{k:'komp',t:'Kompensasi & Dokumen'}];
+    var nama=(CURRENT&&CURRENT.username)?CURRENT.username:'';
+    var sapa=(typeof greet==='function')?greet():'';
+    var h='<div class="hig-wrap"><div class="hig-hi"><h2>Selamat '+sapa+(nama?', '+nama:'')+'</h2><p>Ketuk ikon untuk membuka modul.</p></div>';
+    GRUP.forEach(function(g){
+      var list=MODULES.filter(function(m){
+        if(m.id==='dashboard') return false;
+        if(m.admin && !(CURRENT&&CURRENT.role==='admin')) return false;
+        return m.grp===g.k;
+      });
+      if(!list.length) return;
+      h+='<div class="hig-sec">'+g.t+'</div><div class="hig-grid">';
+      list.forEach(function(m){
+        var lock=(m.status!=='aktif');
+        h+='<div class="hig-it'+(lock?' hig-lock':'')+'" onclick="go(\''+m.id+'\')">'
+          +'<div class="hig-ic">'+m.ic+'</div>'
+          +(lock?'':'<div class="hig-dot"></div>')
+          +'<div class="hig-tx">'+m.name+'</div></div>';
+      });
+      h+='</div>';
+    });
+    h+='</div>';
+    v.innerHTML=h;
+    var hb=document.getElementById('higHome'); if(hb) hb.style.display='none';
+  }
+  setInterval(function(){ paksaGrid(); setVer(); }, 900);
+  setTimeout(function(){ paksaGrid(); setVer(); }, 600);
+})();
+</script>
