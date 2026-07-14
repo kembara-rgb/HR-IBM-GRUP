@@ -1890,3 +1890,166 @@ setelah patch v2.7 kemarin → Commit changes):
   setTimeout(function(){ paksaGrid(); setVer(); }, 600);
 })();
 </script>
+
+<script>
+/* ============================================================
+   PATCH v4.0 — Beranda Ikon (MEDIAN, 14 Jul 2026)
+   Tempel di baris PALING BAWAH index.html, setelah v3.2.
+   ============================================================ */
+(function(){
+  var VER = 'v4.0 · 14 Jul 2026';
+
+  var ICO = {
+    median:'dog', kpi:'coin', kpistore:'file-check', riwayat:'history',
+    users:'user-shield', master:'users', selfservice:'id', karir:'stairs-up',
+    struktur:'sitemap', absensi:'fingerprint', kontrak:'file-text',
+    disiplin:'alert-triangle', payroll:'wallet', dokumen:'stamp',
+    laporan:'bell', dashboard:'layout-dashboard'
+  };
+  var GRUP = [
+    {k:'utama', t:'Utama'},
+    {k:'data',  t:'Data & Karyawan'},
+    {k:'ops',   t:'Operasional HR'},
+    {k:'komp',  t:'Kompensasi & Dokumen'}
+  ];
+
+  var f = document.createElement('link');
+  f.rel='stylesheet';
+  f.href='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css';
+  document.head.appendChild(f);
+
+  var CSS = ''
+  + '.m4{padding:2px 0 26px}'
+  + '.m4-hi{margin:2px 0 12px}'
+  + '.m4-hi h2{margin:0;font-size:18px;font-weight:600;letter-spacing:.2px}'
+  + '.m4-hi p{margin:3px 0 0;font-size:11.5px;opacity:.6}'
+  + '.m4-cari{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:9px 11px;margin:0 0 6px}'
+  + '.m4-cari input{flex:1;background:transparent;border:0;outline:0;color:inherit;font-size:13px;padding:0;width:100%}'
+  + '.m4-sec{margin:18px 0 10px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;opacity:.5;font-weight:700}'
+  + '.hig-grid,.m4-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 4px}'
+  + '@media(min-width:760px){.hig-grid,.m4-grid{grid-template-columns:repeat(6,1fr);gap:20px 8px}}'
+  + '.m4-it{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;padding:2px;border-radius:12px;-webkit-tap-highlight-color:transparent;transition:transform .12s}'
+  + '.m4-it:active{transform:scale(.93)}'
+  + '.m4-ic{position:relative;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10)}'
+  + '.m4-it:hover .m4-ic{border-color:rgba(231,181,60,.55)}'
+  + '.m4-on .m4-ic{background:rgba(231,181,60,.13);border-color:rgba(231,181,60,.35);color:#E7B53C}'
+  + '.m4-dot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#E7B53C}'
+  + '.m4-tx{font-size:9.5px;line-height:1.25;text-align:center;opacity:.85;max-width:76px}'
+  + '.m4-off .m4-ic{opacity:.3}.m4-off .m4-tx{opacity:.4}'
+  + '.m4-home{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1px solid rgba(231,181,60,.4);background:rgba(231,181,60,.13);color:#E7B53C;cursor:pointer;font-size:17px;margin-right:8px;flex:none}'
+  + '.m4-ver{font-size:9.5px;opacity:.55;letter-spacing:.3px;margin-left:8px;white-space:nowrap}';
+  var st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
+
+  function ikon(m){
+    var n = ICO[m.id];
+    if(n) return '<i class="ti ti-'+n+'"></i>';
+    return m.ic || '•';
+  }
+
+  function daftar(){
+    return MODULES.filter(function(m){
+      if(m.id==='dashboard') return false;
+      if(m.admin && !(CURRENT && CURRENT.role==='admin')) return false;
+      return true;
+    });
+  }
+
+  function gridHTML(q){
+    q = (q||'').toLowerCase();
+    var nama = (CURRENT && CURRENT.username) ? CURRENT.username : '';
+    var sapa = (typeof greet==='function') ? greet() : 'datang';
+    var h = '<div class="m4">'
+      + '<div class="m4-hi"><h2>Selamat '+sapa+(nama?', '+nama:'')+'</h2>'
+      + '<p>Ketuk ikon untuk membuka modul · '+VER+'</p></div>'
+      + '<div class="m4-cari"><i class="ti ti-search"></i>'
+      + '<input id="m4Cari" placeholder="Cari modul…" autocomplete="off" value="'+(q?q.replace(/"/g,''):'')+'"></div>';
+    var ada=0;
+    GRUP.forEach(function(g){
+      var list = daftar().filter(function(m){
+        if(m.grp!==g.k) return false;
+        if(q && (m.name||'').toLowerCase().indexOf(q)<0) return false;
+        return true;
+      });
+      if(!list.length) return;
+      ada+=list.length;
+      h += '<div class="m4-sec">'+g.t+'</div><div class="hig-grid m4-grid">';
+      list.forEach(function(m){
+        var on = (m.status==='aktif');
+        h += '<div class="m4-it '+(on?'m4-on':'m4-off')+'" onclick="go(\''+m.id+'\')">'
+           + '<div class="m4-ic">'+ikon(m)+(on?'<span class="m4-dot"></span>':'')+'</div>'
+           + '<div class="m4-tx">'+m.name+'</div></div>';
+      });
+      h += '</div>';
+    });
+    if(!ada) h += '<div style="opacity:.5;font-size:12px;padding:18px 0">Modul tidak ditemukan.</div>';
+    h += '</div>';
+    return h;
+  }
+
+  function render(q){
+    var v = document.getElementById('view-dashboard');
+    if(!v || typeof MODULES==='undefined') return;
+    v.innerHTML = gridHTML(q);
+    var c = document.getElementById('m4Cari');
+    if(c){
+      c.oninput = function(){ var val=this.value; render(val); var n=document.getElementById('m4Cari'); if(n){n.focus(); n.setSelectionRange(val.length,val.length);} };
+    }
+    pasang();
+    var hb=document.getElementById('m4Home'); if(hb) hb.style.display='none';
+  }
+
+  function pasang(){
+    var top = document.querySelector('.top');
+    if(!top) return;
+    if(!document.getElementById('m4Home')){
+      var b=document.createElement('button');
+      b.id='m4Home'; b.className='m4-home'; b.title='Beranda';
+      b.innerHTML='<i class="ti ti-home"></i>';
+      b.onclick=function(){ go('dashboard'); };
+      top.insertBefore(b, top.firstChild);
+    }
+    if(!document.getElementById('m4Ver')){
+      var s=document.createElement('span');
+      s.id='m4Ver'; s.className='m4-ver'; s.textContent=VER;
+      var h1=top.querySelector('h1');
+      if(h1 && h1.parentNode) h1.parentNode.insertBefore(s, h1.nextSibling);
+      else top.appendChild(s);
+    }
+    var old=document.getElementById('higHome'); if(old) old.style.display='none';
+  }
+
+  function bersihkanTeksLiar(){
+    var w=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+    var buang=[], n;
+    while((n=w.nextNode())){
+      var t=(n.nodeValue||'').trim();
+      if(!t) continue;
+      if(t.indexOf('LANGKAH 1 — SUPABASE')===0 || t.indexOf('LANGKAH 2 — GITHUB')===0 || /^-{5,}$/.test(t)) buang.push(n);
+    }
+    buang.forEach(function(x){ if(x.parentNode) x.parentNode.removeChild(x); });
+  }
+
+  var _go = window.go;
+  window.go = function(id){
+    _go(id);
+    pasang();
+    var hb=document.getElementById('m4Home');
+    if(hb) hb.style.display = (id==='dashboard') ? 'none' : 'inline-flex';
+    if(id==='dashboard') render('');
+  };
+
+  var _showApp = window.showApp;
+  window.showApp = function(){
+    _showApp();
+    setTimeout(function(){ pasang(); render(''); bersihkanTeksLiar(); }, 300);
+  };
+
+  setInterval(function(){
+    var v=document.getElementById('view-dashboard');
+    if(!v || v.style.display==='none') return;
+    if(!v.querySelector('.m4-grid')) render('');
+  }, 1200);
+
+  setTimeout(function(){ pasang(); render(''); bersihkanTeksLiar(); }, 1500);
+})();
+</script>
