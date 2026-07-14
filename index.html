@@ -1248,3 +1248,66 @@ async function ksSave(){
   if(document.getElementById('empBody')) hdrEmail();
 })();
 </script>
+
+LANGKAH 1 — SUPABASE (SQL Editor → New query → Run):
+------------------------------------------------------
+insert into app_users (username, email, password_hash, role, approved)
+values ('ADMINISTRATOR', 'data@intibharu-grup.com',
+        '276e2acc3ecc2284e445ad4f0482aba6fae5e8c5a7d06837fac9c83ac2dc6b19',
+        'viewer', true)
+on conflict (username) do update set role='viewer', approved=true;
+------------------------------------------------------
+(Login akun baru: username ADMINISTRATOR — kata sandinya saya kirim terpisah di chat.)
+
+
+LANGKAH 2 — GITHUB (index.html → Edit → tempel di baris PALING BAWAH,
+setelah patch v2.7 kemarin → Commit changes):
+------------------------------------------------------
+<script>
+/* ============================================================
+   PATCH v2.8 — Role VIEWER (baca-saja): blokir semua tulis
+   (14 Jul 2026 — MEDIAN)
+   ============================================================ */
+(function(){
+  function guardViewer(){
+    if(!CURRENT || CURRENT.role!=='viewer' || !SB || SB.__ro) return;
+    const asli = SB.from.bind(SB);
+    SB.from = function(t){
+      const q = asli(t);
+      ['insert','update','upsert','delete'].forEach(function(m){
+        q[m] = function(){ return Promise.resolve({data:null, error:{message:'Akun baca-saja — perubahan tidak diizinkan'}}); };
+      });
+      return q;
+    };
+    SB.__ro = true;
+    var w=document.getElementById('whoami');
+    if(w) w.textContent = CURRENT.username + ' · Baca-Saja 🔒';
+  }
+  var _showApp = window.showApp;
+  window.showApp = function(){
+    _showApp();
+    guardViewer();
+    if(CURRENT && CURRENT.role==='viewer'){
+      setTimeout(function(){
+        var top=document.querySelector('.top');
+        if(top && !document.getElementById('roBanner')){
+          var b=document.createElement('div');
+          b.id='roBanner';
+          b.style.cssText='background:#B45309;color:#fff;font-size:12px;padding:4px 12px;border-radius:6px;margin-left:8px;align-self:center';
+          b.textContent='Mode Baca-Saja';
+          top.insertBefore(b, top.querySelector('.spacer'));
+        }
+      },400);
+    }
+  };
+  var _loadSupa = window.loadSupa;
+  if(_loadSupa){
+    window.loadSupa = async function(){
+      var r = await _loadSupa.apply(this, arguments);
+      guardViewer();
+      return r;
+    };
+  }
+})();
+</script>
+------------------------------------------------------
