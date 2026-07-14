@@ -1388,3 +1388,354 @@ setelah patch v2.7 kemarin → Commit changes):
   setTimeout(rwFillList,1500);
 })();
 </script>
+
+<script>
+/* ============================================================
+   PATCH v3.0 — (1) Cari cepat + kirim di Simpan KPI
+                (2) Modul Manajemen Kontrak
+                (3) Modul Dokumen Resmi (registri + penomoran)
+   (14 Jul 2026 — MEDIAN)
+   ============================================================ */
+(function(){
+  var RO = function(){ return CURRENT && CURRENT.role==='viewer'; };
+  function el(id){ return document.getElementById(id); }
+
+  var EMPCACHE = null;
+  async function empAll(){
+    if(EMPCACHE) return EMPCACHE;
+    try{
+      if(!SB) await loadSupa();
+      var r = await SB.from('employees').select('nama,email,hp,jabatan,cabang,nik').order('nama');
+      EMPCACHE = r.data || [];
+    }catch(e){ EMPCACHE = []; }
+    return EMPCACHE;
+  }
+  async function datalistNama(id){
+    if(el(id)) return;
+    var d = await empAll();
+    var dl = document.createElement('datalist'); dl.id = id;
+    dl.innerHTML = d.map(function(e){ return '<option value="'+(''+(e.nama||'')).replace(/"/g,'&quot;')+'">'; }).join('');
+    document.body.appendChild(dl);
+  }
+  function waLink(hp, teks){
+    var no=(''+(hp||'')).replace(/\D/g,''); if(!no) return null;
+    if(no.indexOf('0')===0) no='62'+no.slice(1);
+    return 'https://wa.me/'+no+'?text='+encodeURIComponent(teks);
+  }
+  function mailLink(em, subj, teks){
+    if(!em) return null;
+    return 'mailto:'+em+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(teks);
+  }
+  async function kirimBtns(nama, subj, teks){
+    var d = await empAll();
+    var c = d.find(function(e){ return (''+(e.nama||'')).trim().toLowerCase() === (''+nama).trim().toLowerCase(); });
+    var out = '';
+    if(c && c.email) out += '<a href="'+mailLink(c.email, subj, teks)+'" title="Kirim email" style="text-decoration:none;margin-right:6px">📧</a>';
+    if(c && c.hp)    out += '<a href="'+waLink(c.hp, teks)+'" target="_blank" title="Kirim WhatsApp" style="text-decoration:none">🟢</a>';
+    if(!out) out = '<span style="font-size:11px;color:#ba7517" title="Email/HP belum diisi di Master Data Karyawan">—</span>';
+    return out;
+  }
+
+  function ksBar(){
+    var view = el('view-kpistore'); if(!view) return;
+    if(el('ksSearch')) return;
+    var tb = view.querySelector('.toolbar'); if(!tb) return;
+    var inp = document.createElement('input');
+    inp.id='ksSearch'; inp.placeholder='Cari nama… (ketik 2 huruf)';
+    inp.setAttribute('list','dlNama');
+    inp.style.cssText='padding:8px 12px;border-radius:6px;border:1px solid var(--line2);background:var(--panel);color:var(--cream);font-size:13px;min-width:200px';
+    inp.addEventListener('input', ksFilter);
+    tb.insertBefore(inp, tb.firstChild);
+    datalistNama('dlNama');
+  }
+  function ksFilter(){
+    var q = (el('ksSearch') ? el('ksSearch').value : '').trim().toLowerCase();
+    var body = el('ksBody'); if(!body) return;
+    Array.prototype.forEach.call(body.querySelectorAll('tr'), function(tr){
+      if(!q){ tr.style.display=''; return; }
+      tr.style.display = (tr.innerText||'').toLowerCase().indexOf(q) >= 0 ? '' : 'none';
+    });
+  }
+  var _ksLoad = window.ksLoad;
+  if(_ksLoad){
+    window.ksLoad = async function(){
+      await _ksLoad.apply(this, arguments);
+      ksBar();
+      setTimeout(async function(){
+        var body = el('ksBody'); if(!body) return;
+        var rows = body.querySelectorAll('tr');
+        for(var i=0;i<rows.length;i++){
+          var tr = rows[i];
+          if(tr.dataset.kirim) continue;
+          var inpNama = tr.querySelector('input');
+          var nama = inpNama ? inpNama.value : '';
+          if(!nama) continue;
+          var td = document.createElement('td');
+          td.innerHTML = await kirimBtns(nama, 'KPI & Insentif — '+nama,
+            'Yth. '+nama+',\n\nBerikut ringkasan KPI Anda periode berjalan telah diarsipkan di sistem HR IBM GRUP. Mohon konfirmasi & tanda tangan.\n\nSalam,\nHRD IBM GRUP');
+          tr.appendChild(td);
+          tr.dataset.kirim='1';
+        }
+        ksFilter();
+      }, 300);
+    };
+  }
+
+  var KTR = [];
+  function ktrStat(t,c){ var e=el('ktrStatus'); if(e){ e.textContent=t; e.style.color=c||'#8b949e'; } }
+  function sisaHari(d){
+    if(!d) return null;
+    var a = new Date(d+'T00:00:00'), b = new Date();
+    return Math.ceil((a-b)/86400000);
+  }
+  window.ktrLoad = async function(){
+    if(!SB) await loadSupa();
+    if(!SB){ ktrStat('offline','#c0392b'); return; }
+    ktrStat('memuat…');
+    try{
+      var r = await SB.from('kontrak').select('*').order('berakhir');
+      KTR = r.data || [];
+      ktrStat('tersinkron — '+KTR.length+' kontrak','#1d9e75');
+    }catch(e){ ktrStat('offline — jalankan SQL tabel kontrak','#c0392b'); KTR=[]; }
+    ktrRender();
+  };
+  window.ktrAdd = function(){
+    if(RO()) return;
+    KTR.push({nama:'',nik:'',jenis:'PKWT',no_kontrak:'',mulai:'',berakhir:'',jabatan:'',cabang:'Bandar Lampung',file_url:'',catatan:''});
+    ktrRender();
+  };
+  window.ktrDel = async function(i){
+    if(RO()) return;
+    var k = KTR[i];
+    if(!confirm('Hapus kontrak '+(k.nama||'ini')+'?')) return;
+    if(k.id && SB){ try{ await SB.from('kontrak').delete().eq('id',k.id); }catch(e){} }
+    KTR.splice(i,1); ktrRender();
+  };
+  window.ktrSave = async function(){
+    if(RO()){ ktrStat('akun baca-saja','#c0392b'); return; }
+    if(!SB) await loadSupa();
+    var recs = KTR.filter(function(k){ return k.nama && (''+k.nama).trim(); }).map(function(k){
+      return {nama:(''+k.nama).trim(), nik:k.nik||null, jenis:k.jenis||'PKWT', no_kontrak:k.no_kontrak||null,
+              mulai:k.mulai||null, berakhir:k.berakhir||null, jabatan:k.jabatan||null,
+              cabang:k.cabang||null, file_url:k.file_url||null, catatan:k.catatan||null};
+    });
+    if(!recs.length){ ktrStat('tidak ada data terisi'); return; }
+    ktrStat('menyimpan…');
+    try{
+      var r = await SB.from('kontrak').upsert(recs, {onConflict:'nama,no_kontrak'});
+      if(r.error) throw r.error;
+      ktrStat('tersimpan ✓ — '+recs.length+' kontrak','#1d9e75');
+      ktrLoad();
+    }catch(e){ ktrStat('gagal menyimpan','#c0392b'); }
+  };
+  async function ktrRender(){
+    var tb = el('ktrBody'); if(!tb) return;
+    tb.innerHTML = '';
+    var q = (el('ktrSearch') ? el('ktrSearch').value : '').trim().toLowerCase();
+    var n60=0,n30=0,nHabis=0;
+    for(var i=0;i<KTR.length;i++){
+      var k = KTR[i];
+      if(q && (''+(k.nama||'')).toLowerCase().indexOf(q) < 0) continue;
+      var s = sisaHari(k.berakhir);
+      var warna='', label='';
+      if(s!==null){
+        if(s < 0){ warna='#c0392b'; label='HABIS'; nHabis++; }
+        else if(s <= 30){ warna='#c0392b'; label=s+' hr'; n30++; }
+        else if(s <= 60){ warna='#B45309'; label=s+' hr'; n60++; }
+        else if(s <= 90){ warna='#ba7517'; label=s+' hr'; }
+        else { warna='#1d9e75'; label=s+' hr'; }
+      }
+      var inp = function(f,w,t){ return '<input '+(RO()?'disabled ':'')+'type="'+(t||'text')+'" style="width:'+(w||100)+'px" data-i="'+i+'" data-f="'+f+'" value="'+((k[f]==null?'':k[f])+'').replace(/"/g,'&quot;')+'">'; };
+      var jn = '<select '+(RO()?'disabled ':'')+'data-i="'+i+'" data-f="jenis">'+
+               ['PKWT','PKWTT','Magang','Kemitraan'].map(function(j){ return '<option '+(k.jenis===j?'selected':'')+'>'+j+'</option>'; }).join('')+'</select>';
+      var tr = document.createElement('tr');
+      var kirimTeks = 'Yth. '+(k.nama||'')+',\n\nKontrak kerja Anda ('+(k.jenis||'')+' No. '+(k.no_kontrak||'-')+') berakhir pada '+(k.berakhir||'-')+'.\nMohon menghubungi HRD untuk proses perpanjangan/evaluasi.\n\nSalam,\nHRD IBM GRUP';
+      tr.innerHTML =
+        '<td>'+inp('nama',130)+'</td>'+
+        '<td>'+jn+'</td>'+
+        '<td>'+inp('no_kontrak',120)+'</td>'+
+        '<td>'+inp('jabatan',100)+'</td>'+
+        '<td>'+inp('mulai',110,'date')+'</td>'+
+        '<td>'+inp('berakhir',110,'date')+'</td>'+
+        '<td style="text-align:center"><b style="color:'+warna+'">'+label+'</b></td>'+
+        '<td class="kirimcol">…</td>'+
+        (RO()?'<td></td>':'<td><button class="del" onclick="ktrDel('+i+')">×</button></td>');
+      tb.appendChild(tr);
+      (function(tr,nama,teks){
+        kirimBtns(nama, 'Pengingat Kontrak Kerja — '+nama, teks).then(function(h){
+          var c = tr.querySelector('.kirimcol'); if(c) c.innerHTML = h;
+        });
+      })(tr, k.nama, kirimTeks);
+    }
+    if(!tb.children.length) tb.innerHTML = '<tr><td colspan="9" style="text-align:left;padding:12px;color:#6b7280">Belum ada kontrak. Klik <b>+ Tambah</b> lalu <b>Save</b>.</td></tr>';
+    tb.querySelectorAll('input[data-f],select[data-f]').forEach(function(x){
+      x.addEventListener('change', function(ev){
+        KTR[+ev.target.dataset.i][ev.target.dataset.f] = ev.target.value;
+        ktrRender();
+      });
+    });
+    var kc = el('ktrCards');
+    if(kc) kc.innerHTML = card('Total Kontrak', KTR.length, '') + card('≤30 hari', n30, n30?'⚠':'') + card('31–60 hari', n60, '') + card('Sudah Habis', nHabis, nHabis?'⚠':'');
+  }
+  window.ktrRender = ktrRender;
+
+  var DOK = [];
+  function dokStat(t,c){ var e=el('dokStatus'); if(e){ e.textContent=t; e.style.color=c||'#8b949e'; } }
+  function nomorBaru(jenis){
+    var th = new Date().getFullYear();
+    var n = DOK.filter(function(d){ return (d.jenis===jenis) && ((''+(d.no_dokumen||'')).indexOf(''+th) >= 0); }).length + 1;
+    var bl = ('0'+(new Date().getMonth()+1)).slice(-2);
+    var tg = ('0'+new Date().getDate()).slice(-2);
+    return jenis+'-'+n+'/'+jenis+'/IBM/'+tg+'-'+bl+'-'+th;
+  }
+  window.dokLoad = async function(){
+    if(!SB) await loadSupa();
+    if(!SB){ dokStat('offline','#c0392b'); return; }
+    dokStat('memuat…');
+    try{
+      var r = await SB.from('dokumen').select('*').order('tanggal', {ascending:false});
+      DOK = r.data || [];
+      dokStat('tersinkron — '+DOK.length+' dokumen','#1d9e75');
+    }catch(e){ dokStat('offline — jalankan SQL tabel dokumen','#c0392b'); DOK=[]; }
+    dokRender();
+  };
+  window.dokAdd = function(){
+    if(RO()) return;
+    var j = el('dokJenis') ? el('dokJenis').value : 'SK';
+    DOK.unshift({no_dokumen:nomorBaru(j), jenis:j, nama:'', tanggal:new Date().toISOString().slice(0,10), perihal:'', file_url:''});
+    dokRender();
+  };
+  window.dokDel = async function(i){
+    if(RO()) return;
+    var d = DOK[i];
+    if(!confirm('Hapus dokumen '+(d.no_dokumen||'ini')+'?')) return;
+    if(d.id && SB){ try{ await SB.from('dokumen').delete().eq('id',d.id); }catch(e){} }
+    DOK.splice(i,1); dokRender();
+  };
+  window.dokSave = async function(){
+    if(RO()){ dokStat('akun baca-saja','#c0392b'); return; }
+    if(!SB) await loadSupa();
+    var recs = DOK.filter(function(d){ return d.no_dokumen; }).map(function(d){
+      return {no_dokumen:d.no_dokumen, jenis:d.jenis||null, nama:d.nama||null, tanggal:d.tanggal||null, perihal:d.perihal||null, file_url:d.file_url||null};
+    });
+    if(!recs.length){ dokStat('tidak ada data'); return; }
+    dokStat('menyimpan…');
+    try{
+      var r = await SB.from('dokumen').upsert(recs, {onConflict:'no_dokumen'});
+      if(r.error) throw r.error;
+      dokStat('tersimpan ✓ — '+recs.length+' dokumen','#1d9e75');
+      dokLoad();
+    }catch(e){ dokStat('gagal menyimpan','#c0392b'); }
+  };
+  async function dokRender(){
+    var tb = el('dokBody'); if(!tb) return;
+    tb.innerHTML='';
+    var q = (el('dokSearch') ? el('dokSearch').value : '').trim().toLowerCase();
+    for(var i=0;i<DOK.length;i++){
+      var d = DOK[i];
+      var hay = ((d.nama||'')+' '+(d.no_dokumen||'')+' '+(d.perihal||'')).toLowerCase();
+      if(q && hay.indexOf(q) < 0) continue;
+      var inp = function(f,w,t){ return '<input '+(RO()?'disabled ':'')+'type="'+(t||'text')+'" style="width:'+(w||110)+'px" data-i="'+i+'" data-f="'+f+'" value="'+((d[f]==null?'':d[f])+'').replace(/"/g,'&quot;')+'">'; };
+      var tr = document.createElement('tr');
+      var teks = 'Yth. '+(d.nama||'')+',\n\nDokumen '+(d.jenis||'')+' No. '+(d.no_dokumen||'')+' tertanggal '+(d.tanggal||'')+' perihal "'+(d.perihal||'')+'" telah diterbitkan dan diarsipkan.\n'+(d.file_url?('Tautan: '+d.file_url+'\n'):'')+'\nSalam,\nHRD IBM GRUP';
+      tr.innerHTML =
+        '<td><b>'+(d.no_dokumen||'')+'</b></td>'+
+        '<td>'+(d.jenis||'')+'</td>'+
+        '<td>'+inp('nama',130)+'</td>'+
+        '<td>'+inp('tanggal',110,'date')+'</td>'+
+        '<td>'+inp('perihal',180)+'</td>'+
+        '<td>'+inp('file_url',150)+(d.file_url?' <a href="'+d.file_url+'" target="_blank">📄</a>':'')+'</td>'+
+        '<td class="kirimcol">…</td>'+
+        (RO()?'<td></td>':'<td><button class="del" onclick="dokDel('+i+')">×</button></td>');
+      tb.appendChild(tr);
+      (function(tr,nama,teks,d){
+        kirimBtns(nama, (d.jenis||'')+' '+(d.no_dokumen||''), teks).then(function(h){
+          var c = tr.querySelector('.kirimcol'); if(c) c.innerHTML = h;
+        });
+      })(tr, d.nama, teks, d);
+    }
+    if(!tb.children.length) tb.innerHTML = '<tr><td colspan="8" style="text-align:left;padding:12px;color:#6b7280">Belum ada dokumen. Pilih jenis lalu klik <b>+ Terbitkan Nomor</b>.</td></tr>';
+    tb.querySelectorAll('input[data-f]').forEach(function(x){
+      x.addEventListener('change', function(ev){ DOK[+ev.target.dataset.i][ev.target.dataset.f] = ev.target.value; });
+    });
+    var dc = el('dokCards');
+    if(dc){
+      var th = new Date().getFullYear();
+      var thn = DOK.filter(function(d){ return (''+(d.tanggal||'')).indexOf(''+th)===0; }).length;
+      dc.innerHTML = card('Total Dokumen', DOK.length, '') + card('Tahun '+th, thn, '') + card('Jenis SK', DOK.filter(function(d){return d.jenis==='SK';}).length, '');
+    }
+  }
+  window.dokRender = dokRender;
+
+  function pasangView(){
+    var content = document.querySelector('.content'); if(!content) return;
+    if(!el('view-kontrak')){
+      var v1 = document.createElement('div');
+      v1.className='view'; v1.id='view-kontrak';
+      v1.innerHTML =
+        '<div class="toolbar">'+
+          '<input id="ktrSearch" placeholder="Cari nama… (2 huruf)" list="dlNama" style="padding:8px 12px;border-radius:6px;border:1px solid var(--line2);background:var(--panel);color:var(--cream);font-size:13px;min-width:200px" oninput="ktrRender()"/>'+
+          '<button class="primary" onclick="ktrLoad()">↻ Muat</button>'+
+          '<button onclick="ktrAdd()">+ Tambah</button>'+
+          '<button onclick="ktrSave()">💾 Save</button>'+
+          '<span id="ktrStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#8b949e"></span>'+
+        '</div>'+
+        '<div class="cards" id="ktrCards"></div>'+
+        '<div class="tablewrap"><table style="min-width:1000px"><thead><tr>'+
+          '<th>Nama</th><th>Jenis</th><th>No. Kontrak</th><th>Jabatan</th><th>Mulai</th><th>Berakhir</th><th>Sisa</th><th>Kirim</th><th></th>'+
+        '</tr></thead><tbody id="ktrBody"></tbody></table></div>'+
+        '<details><summary>Tentang Manajemen Kontrak</summary><ul>'+
+          '<li>Warna sisa masa berlaku: <b style="color:#c0392b">merah ≤30 hari / habis</b>, <b style="color:#B45309">jingga 31–60</b>, <b style="color:#ba7517">kuning 61–90</b>, <b style="color:#1d9e75">hijau &gt;90</b>.</li>'+
+          '<li>Tombol 📧 / 🟢 mengirim pengingat perpanjangan ke email / WhatsApp karyawan (diambil dari Master Data Karyawan).</li>'+
+        '</ul></details>';
+      content.appendChild(v1);
+    }
+    if(!el('view-dokumen')){
+      var v2 = document.createElement('div');
+      v2.className='view'; v2.id='view-dokumen';
+      v2.innerHTML =
+        '<div class="toolbar">'+
+          '<input id="dokSearch" placeholder="Cari nama / nomor / perihal…" style="padding:8px 12px;border-radius:6px;border:1px solid var(--line2);background:var(--panel);color:var(--cream);font-size:13px;min-width:220px" oninput="dokRender()"/>'+
+          '<label style="align-self:center;font-size:13px;font-weight:bold">Jenis:</label>'+
+          '<select id="dokJenis"><option>SK</option><option>SP1</option><option>SP2</option><option>SP3</option><option>PKWT</option><option>PKWTT</option><option>SKK</option><option>MEMO</option><option>SE</option></select>'+
+          '<button class="primary" onclick="dokLoad()">↻ Muat</button>'+
+          '<button onclick="dokAdd()">+ Terbitkan Nomor</button>'+
+          '<button onclick="dokSave()">💾 Save</button>'+
+          '<span id="dokStatus" style="margin-left:auto;align-self:center;font-size:12px;color:#8b949e"></span>'+
+        '</div>'+
+        '<div class="cards" id="dokCards"></div>'+
+        '<div class="tablewrap"><table style="min-width:1050px"><thead><tr>'+
+          '<th>No. Dokumen</th><th>Jenis</th><th>Nama</th><th>Tanggal</th><th>Perihal</th><th>Tautan Arsip</th><th>Kirim</th><th></th>'+
+        '</tr></thead><tbody id="dokBody"></tbody></table></div>'+
+        '<details><summary>Tentang Dokumen Resmi</summary><ul>'+
+          '<li><b>+ Terbitkan Nomor</b> membuat nomor otomatis sesuai konvensi IBM (contoh: SK-1/SK/IBM/14-07-2026).</li>'+
+          '<li>Isi nama, perihal, dan tautan arsip Drive, lalu <b>Save</b>. Dokumen menjadi registri resmi dan bisa dicari kapan pun.</li>'+
+          '<li>Pembuatan berkas dokumennya tetap lewat MEDIAN/Claude; nomor &amp; arsipnya tercatat di sini.</li>'+
+        '</ul></details>';
+      content.appendChild(v2);
+    }
+  }
+  function aktifkanModul(){
+    if(typeof MODULES === 'undefined') return;
+    MODULES.forEach(function(m){
+      if(m.id==='kontrak' || m.id==='dokumen'){ m.status='aktif'; delete m.will; }
+    });
+    try{ buildNav(); }catch(e){}
+  }
+  var _showApp2 = window.showApp;
+  window.showApp = function(){
+    _showApp2();
+    pasangView();
+    aktifkanModul();
+    datalistNama('dlNama');
+  };
+  var _go = window.go;
+  window.go = function(id){
+    pasangView();
+    _go(id);
+    if(id==='kontrak') ktrLoad();
+    if(id==='dokumen') dokLoad();
+  };
+  setTimeout(function(){ pasangView(); aktifkanModul(); datalistNama('dlNama'); }, 1200);
+})();
+</script>
