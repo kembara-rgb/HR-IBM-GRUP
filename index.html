@@ -419,7 +419,7 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-const APP_VER="5.0", APP_DATE="14 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="6.0", APP_DATE="14 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 function greet(){const h=new Date().getHours();return h<11?"pagi":h<15?"siang":h<19?"sore":"malam";}
@@ -1726,12 +1726,11 @@ async function ksSave(){
 
 <script>
 /* ============================================================
-   UI v5.0 — Beranda Ikon (MEDIAN, 14 Jul 2026)
-   Satu-satunya lapisan tampilan. Patch v3.1/v3.2/v4.0/v4.1
-   sudah dihapus permanen — jangan ditambah lapisan lain lagi.
+   UI v6.0 — Beranda Krem: grup drill-down + menu geser (MEDIAN)
+   Satu-satunya lapisan tampilan. Jangan tumpuk lapisan lain.
    ============================================================ */
 (function(){
-  var VER = 'v5.0 · 14 Jul 2026';
+  var VER = 'v6.0 · 15 Jul 2026';
 
   var ICO = {
     median:'dog', kpi:'coin', kpistore:'file-check', riwayat:'history',
@@ -1746,11 +1745,12 @@ async function ksSave(){
     disiplin:'Disiplin', payroll:'Gaji', dokumen:'Dokumen', laporan:'Laporan'
   };
   var GRUP = [
-    {t:'Utama',                ids:['median','kpistore','riwayat','kpi']},
-    {t:'Data & Karyawan',      ids:['master','users','selfservice','struktur']},
-    {t:'Operasional HR',       ids:['absensi','kontrak','disiplin','karir']},
-    {t:'Kompensasi & Dokumen', ids:['payroll','dokumen','laporan']}
+    {k:'utama', t:'Utama',                ic:'star',       ids:['median','kpistore','riwayat','kpi']},
+    {k:'data',  t:'Data Karyawan',        ic:'users-group',ids:['master','users','selfservice','struktur']},
+    {k:'ops',   t:'Operasional HR',       ic:'briefcase',  ids:['absensi','kontrak','disiplin','karir']},
+    {k:'komp',  t:'Kompensasi & Dokumen', ic:'file-stack', ids:['payroll','dokumen','laporan']}
   ];
+  var FAB_MODUL = {kpi:1, kpistore:1};   // modul yg butuh tombol pilih konteks
 
   var f=document.createElement('link');
   f.rel='stylesheet';
@@ -1758,102 +1758,179 @@ async function ksSave(){
   document.head.appendChild(f);
 
   var CSS = ''
-  + '.ig{padding:2px 0 28px}'
-  + '.ig h2{margin:0;font-size:18px;font-weight:600;color:#F2F4F7}'
-  + '.ig-sub{margin:3px 0 14px;font-size:11.5px;color:#8FA3BC}'
-  + '.ig-cari{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:9px 11px}'
-  + '.ig-cari input{flex:1;background:transparent;border:0;outline:0;color:#F2F4F7;font-size:13px;padding:0;width:100%}'
-  + '.ig-sec{margin:20px 0 10px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#7C8FA8;font-weight:700}'
-  + '.ig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 4px}'
-  + '@media(min-width:760px){.ig-grid{grid-template-columns:repeat(6,1fr);gap:20px 8px}}'
-  + '.ig-it{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s}'
-  + '.ig-it:active{transform:scale(.93)}'
-  + '.ig-ic{position:relative;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#C9D4E2}'
-  + '.ig-it:hover .ig-ic{border-color:rgba(231,181,60,.5)}'
-  + '.ig-dot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#E7B53C}'
-  + '.ig-tx{font-size:10px;line-height:1.2;text-align:center;color:#C9D4E2;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-  + '.ig-off .ig-ic{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06);color:#5B6B7E}'
-  + '.ig-off .ig-tx{color:#5B6B7E}'
-  + '.ig-home{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1px solid rgba(231,181,60,.4);background:rgba(231,181,60,.13);color:#E7B53C;cursor:pointer;font-size:17px;margin-right:8px;flex:none}'
-  + '.top{flex-wrap:nowrap!important;gap:6px!important;align-items:center!important}'
-  + '.top h1{font-size:16px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-  + '.top button{font-size:11px!important;padding:5px 9px!important;white-space:nowrap}'
-  + '#whoami{font-size:10px!important;white-space:nowrap;color:#8FA3BC!important}';
+  + 'body.home #view-dashboard{background:#F4EEE1}'
+  + '.igx{background:#F4EEE1;margin:-14px -14px -120px;padding:20px 16px 130px;min-height:100vh}'
+  + '@media(min-width:760px){.igx{margin:-20px -22px -60px;padding:24px 24px 80px}}'
+  + '.igx h2{margin:0;font-size:20px;font-weight:800;color:#2B2A26;letter-spacing:.2px}'
+  + '.igx .sub{margin:3px 0 16px;font-size:12px;color:#8A8375}'
+  + '.igcari{display:flex;align-items:center;gap:9px;background:#FFFDF8;border:1px solid #E4DAC4;border-radius:12px;padding:11px 13px;margin-bottom:20px;box-shadow:0 1px 2px rgba(120,100,50,.05)}'
+  + '.igcari input{flex:1;background:transparent;border:0;outline:0;color:#2B2A26;font-size:14px;padding:0;width:100%}'
+  + '.igcari i{color:#C99A2E;font-size:17px}'
+  + '.iggrp{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}'
+  + '.iggc{background:#FFFDF8;border:1px solid #E9E0CC;border-radius:16px;padding:16px 14px;cursor:pointer;transition:transform .12s,box-shadow .12s;display:flex;flex-direction:column;gap:10px}'
+  + '.iggc:active{transform:scale(.97)}'
+  + '.iggc:hover{box-shadow:0 6px 18px rgba(160,130,60,.14);border-color:#E7B53C}'
+  + '.iggc .gi{width:44px;height:44px;border-radius:13px;background:#F6EAC9;color:#B9822A;display:flex;align-items:center;justify-content:center;font-size:22px}'
+  + '.iggc .gt{font-size:14px;font-weight:700;color:#2B2A26;line-height:1.2}'
+  + '.iggc .gm{font-size:11px;color:#9A9280}'
+  + '.igback{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:#B9822A;font-size:13px;font-weight:600;cursor:pointer;padding:0;margin-bottom:14px}'
+  + '.igsec{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#A99C7E;font-weight:800;margin:0 0 14px}'
+  + '.iggrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 6px}'
+  + '@media(min-width:760px){.iggrid,.iggrp{max-width:640px}.iggrid{grid-template-columns:repeat(4,1fr)}}'
+  + '.igit{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:transform .12s}'
+  + '.igit:active{transform:scale(.92)}'
+  + '.igic{position:relative;width:52px;height:52px;border-radius:16px;background:#FFFDF8;border:1px solid #E9E0CC;display:flex;align-items:center;justify-content:center;font-size:23px;color:#5B5647;box-shadow:0 1px 3px rgba(150,120,50,.08)}'
+  + '.igit:hover .igic{border-color:#E7B53C;color:#B9822A}'
+  + '.igdot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#E7B53C;border:2px solid #F4EEE1}'
+  + '.igtx{font-size:11px;line-height:1.2;text-align:center;color:#4A4636;max-width:78px}'
+  + '.igoff .igic{background:#EFE8D8;color:#B7AF9A;border-color:#E4DAC4}'
+  + '.igoff .igtx{color:#A79F8C}'
+  + '.igsoon{position:absolute;bottom:-3px;right:-3px;font-size:7.5px;background:#C99A2E;color:#fff;border-radius:6px;padding:0 3px;line-height:1.5}'
+  /* tombol kembali (menu geser) */
+  + '#igMenuBtn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;border:1px solid var(--line2);background:var(--panel);color:var(--cream);cursor:pointer;font-size:18px;margin-right:6px;flex:none}'
+  + '#igMenuBtn:hover{border-color:var(--gold);color:var(--gold)}'
+  /* drawer */
+  + '#igDraw{position:fixed;inset:0;z-index:400;display:none}'
+  + '#igDraw.open{display:block}'
+  + '#igDraw .bg{position:absolute;inset:0;background:rgba(0,0,0,.45)}'
+  + '#igDraw .pan{position:absolute;top:0;left:0;bottom:0;width:270px;max-width:82vw;background:var(--dk);border-right:1px solid var(--line2);padding:16px 0;overflow:auto;transform:translateX(-100%);transition:transform .22s}'
+  + '#igDraw.open .pan{transform:none}'
+  + '#igDraw .dh{padding:4px 18px 14px;border-bottom:1px solid var(--line2);color:var(--cream);font-weight:700;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between}'
+  + '#igDraw .dh span{font-size:15px}#igDraw .dh button{background:none;border:0;color:var(--dim);font-size:20px;cursor:pointer}'
+  + '#igDraw .dg{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#7e93ba;padding:14px 18px 5px}'
+  + '#igDraw a{display:flex;align-items:center;gap:11px;padding:9px 18px;color:#cdd8ea;text-decoration:none;font-size:13.5px;cursor:pointer}'
+  + '#igDraw a:hover{background:#161f2e;color:var(--cream)}'
+  + '#igDraw a i{width:20px;text-align:center;font-size:16px;color:var(--gold)}'
+  + '#igDraw a .lk{margin-left:auto;font-size:9px;color:#8a7a55}';
   var st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
 
+  var OPEN=null;    // null=tampil grup, atau kunci grup
   function cari(id){ for(var i=0;i<MODULES.length;i++) if(MODULES[i].id===id) return MODULES[i]; return null; }
+  function boleh(m){ return m && !(m.admin && !(CURRENT&&CURRENT.role==='admin')); }
 
-  function gridHTML(q){
-    q=(q||'').toLowerCase();
+  function itemHTML(id){
+    var m=cari(id); if(!boleh(m)) return '';
+    var on=(m.status==='aktif'); var label=NAMA[id]||m.name;
+    var soon = m.status==='segera' ? '<span class="igsoon">segera</span>' : (m.status==='rencana' ? '<span class="igsoon" style="background:#9A9280">rencana</span>' : '');
+    return '<div class="igit '+(on?'':'igoff')+'" onclick="igOpen(\''+id+'\')" title="'+(m.name||'')+'">'
+      +'<div class="igic"><i class="ti ti-'+(ICO[id]||'circle')+'"></i>'+(on?'<span class="igdot"></span>':soon)+'</div>'
+      +'<div class="igtx">'+label+'</div></div>';
+  }
+
+  function html(q){
+    q=(q||'').toLowerCase().trim();
     var nm=(CURRENT&&CURRENT.username)?CURRENT.username:'';
     var sapa=(typeof greet==='function')?greet():'datang';
-    var h='<div class="ig"><h2>Selamat '+sapa+(nm?', '+nm:'')+'</h2>'
-        +'<div class="ig-sub">Ketuk ikon untuk membuka modul · '+VER+'</div>'
-        +'<div class="ig-cari"><i class="ti ti-search"></i>'
+    var h='<div class="igx"><h2>Selamat '+sapa+(nm?', '+nm:'')+'</h2>'
+        +'<div class="sub">Pilih grup lalu ketuk ikon · '+VER+'</div>'
+        +'<div class="igcari"><i class="ti ti-search"></i>'
         +'<input id="igCari" placeholder="Cari modul…" autocomplete="off" value="'+q.replace(/"/g,'')+'"></div>';
-    var ada=0;
+
+    if(q){ // mode cari: tampilkan semua ikon yg cocok, lewati grup
+      var hits=[];
+      GRUP.forEach(function(g){ g.ids.forEach(function(id){ var m=cari(id); if(boleh(m) && (NAMA[id]||m.name).toLowerCase().indexOf(q)>=0) hits.push(id); }); });
+      h+='<div class="igsec">Hasil pencarian</div><div class="iggrid">'+(hits.map(itemHTML).join('')||'')+'</div>';
+      if(!hits.length) h+='<div style="color:#9A9280;font-size:13px">Modul tidak ditemukan.</div>';
+      return h+'</div>';
+    }
+
+    if(OPEN){ // tingkat 2: ikon dari satu grup
+      var g=null; GRUP.forEach(function(x){ if(x.k===OPEN) g=x; });
+      if(g){
+        h+='<button class="igback" onclick="igGrup(null)"><i class="ti ti-chevron-left"></i> Semua grup</button>';
+        h+='<div class="igsec">'+g.t+'</div><div class="iggrid">'+g.ids.map(itemHTML).join('')+'</div>';
+      }
+      return h+'</div>';
+    }
+
+    // tingkat 1: 4 grup
+    h+='<div class="iggrp">';
     GRUP.forEach(function(g){
-      var list=[];
-      g.ids.forEach(function(id){
-        var m=cari(id); if(!m) return;
-        if(m.admin && !(CURRENT && CURRENT.role==='admin')) return;
-        var label=NAMA[id]||m.name;
-        if(q && label.toLowerCase().indexOf(q)<0) return;
-        list.push({m:m,label:label});
-      });
-      if(!list.length) return;
-      ada+=list.length;
-      h+='<div class="ig-sec">'+g.t+'</div><div class="ig-grid">';
-      list.forEach(function(x){
-        var on=(x.m.status==='aktif');
-        h+='<div class="ig-it '+(on?'':'ig-off')+'" onclick="go(\''+x.m.id+'\')" title="'+x.m.name+'">'
-          +'<div class="ig-ic"><i class="ti ti-'+(ICO[x.m.id]||'circle')+'"></i>'+(on?'<span class="ig-dot"></span>':'')+'</div>'
-          +'<div class="ig-tx">'+x.label+'</div></div>';
-      });
-      h+='</div>';
+      var n=g.ids.filter(function(id){var m=cari(id);return boleh(m);}).length;
+      h+='<div class="iggc" onclick="igGrup(\''+g.k+'\')">'
+        +'<div class="gi"><i class="ti ti-'+g.ic+'"></i></div>'
+        +'<div class="gt">'+g.t+'</div><div class="gm">'+n+' modul</div></div>';
     });
-    if(!ada) h+='<div style="color:#7C8FA8;font-size:12px;padding:18px 0">Modul tidak ditemukan.</div>';
+    h+='</div>';
     return h+'</div>';
   }
 
+  function draw(q){
+    var v=document.getElementById('view-dashboard');
+    if(!v || typeof MODULES==='undefined') return;
+    var baru=html(q);
+    if(v.innerHTML!==baru) v.innerHTML=baru;
+    var c=document.getElementById('igCari');
+    if(c) c.oninput=function(){ var val=this.value; OPEN=null; draw(val); var n=document.getElementById('igCari'); if(n){ n.focus(); n.setSelectionRange(val.length,val.length);} };
+  }
+
+  window.igGrup=function(k){ OPEN=k; draw(''); window.scrollTo(0,0); };
+  window.igOpen=function(id){ go(id); };
+
+  // ---- menu geser (drawer) ----
+  function buildDraw(){
+    var d=document.getElementById('igDraw');
+    if(!d){
+      d=document.createElement('div'); d.id='igDraw';
+      d.innerHTML='<div class="bg" onclick="igDraw(0)"></div><div class="pan"><div class="dh"><span>Semua Modul</span><button onclick="igDraw(0)" aria-label="tutup">×</button></div><div id="igDrawList"></div></div>';
+      document.body.appendChild(d);
+    }
+    var wrap=document.getElementById('igDrawList'); if(!wrap) return;
+    var h='';
+    GRUP.forEach(function(g){
+      var items=g.ids.filter(function(id){return boleh(cari(id));});
+      if(!items.length) return;
+      h+='<div class="dg">'+g.t+'</div>';
+      items.forEach(function(id){
+        var m=cari(id); var on=(m.status==='aktif');
+        h+='<a onclick="igOpen(\''+id+'\');igDraw(0)"><i class="ti ti-'+(ICO[id]||'circle')+'"></i>'+(NAMA[id]||m.name)+(on?'':'<span class="lk">'+m.status+'</span>')+'</a>';
+      });
+    });
+    wrap.innerHTML=h;
+  }
+  window.igDraw=function(open){ var d=document.getElementById('igDraw'); if(!d){buildDraw();d=document.getElementById('igDraw');} if(open){buildDraw();d.classList.add('open');} else d.classList.remove('open'); };
+
   function pasang(){
     var top=document.querySelector('.top'); if(!top) return;
-    if(!document.getElementById('igHome')){
+    if(!document.getElementById('igMenuBtn')){
       var b=document.createElement('button');
-      b.id='igHome'; b.className='ig-home'; b.title='Beranda';
-      b.innerHTML='<i class="ti ti-home"></i>';
-      b.onclick=function(){ go('dashboard'); };
+      b.id='igMenuBtn'; b.title='Menu'; b.innerHTML='<i class="ti ti-chevron-left"></i>';
+      b.onclick=function(){ igDraw(1); };
       top.insertBefore(b, top.firstChild);
     }
   }
 
-  function render(q){
-    var v=document.getElementById('view-dashboard');
-    if(!v || typeof MODULES==='undefined') return;
-    var baru=gridHTML(q);
-    if(v.innerHTML!==baru) v.innerHTML=baru;
-    var c=document.getElementById('igCari');
-    if(c) c.oninput=function(){ var val=this.value; render(val); var n=document.getElementById('igCari'); if(n){ n.focus(); n.setSelectionRange(val.length,val.length); } };
-    pasang();
-    var hb=document.getElementById('igHome'); if(hb) hb.style.display='none';
+  function fab(id){
+    var fb=document.getElementById('ctxFab');
+    if(fb) fb.style.display = FAB_MODUL[id] ? 'block' : 'none';
+    var cp=document.getElementById('ctxPanel'); if(cp && !FAB_MODUL[id]) cp.style.display='none';
   }
+
+  function aktif(){ var r=document.getElementById('appRoot'); return r && r.style.display!=='none'; }
 
   var _go=window.go;
   window.go=function(id){
     _go(id);
-    pasang();
-    var hb=document.getElementById('igHome');
-    if(hb) hb.style.display=(id==='dashboard')?'none':'inline-flex';
-    if(id==='dashboard') render('');
+    pasang(); fab(id);
+    document.body.classList.toggle('home', id==='dashboard');
+    if(id==='dashboard'){ OPEN=null; draw(''); }
   };
 
   var _showApp=window.showApp;
   window.showApp=function(){
     _showApp();
-    setTimeout(function(){ pasang(); render(''); }, 300);
+    setTimeout(function(){ pasang(); document.body.classList.add('home'); OPEN=null; draw(''); fab('dashboard'); }, 250);
   };
 
-  setTimeout(function(){ pasang(); render(''); }, 1200);
+  // jaga anti layar kosong
+  setInterval(function(){
+    if(!aktif() || typeof MODULES==='undefined') return;
+    var v=document.getElementById('view-dashboard'); if(!v) return;
+    var tampil=v.classList.contains('show')||getComputedStyle(v).display!=='none';
+    if(tampil && !v.querySelector('.igx')){ pasang(); OPEN=null; draw(''); }
+  }, 900);
+
+  [400,1000,1800,3000].forEach(function(t){ setTimeout(function(){ if(aktif()){ pasang(); if(document.body.classList.contains('home')) draw(''); } }, t); });
 })();
 </script>
 </body>
