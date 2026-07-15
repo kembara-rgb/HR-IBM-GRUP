@@ -419,7 +419,7 @@ const MODULES=[
  {id:"laporan",name:"Notifikasi & Laporan",ic:"🔔",status:"rencana",grp:"komp",desc:"Alert WhatsApp + laporan HR.",will:["Alert via Fonnte","Laporan turnover/insentif","Export Excel"]},
 ];
 let CURRENT=null;
-const APP_VER="2.6", APP_DATE="5 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
+const APP_VER="5.0", APP_DATE="14 Jul 2026"; // <-- NAIKKAN tiap ada perubahan
 const naktif=()=>MODULES.filter(m=>m.status==="aktif"&&!m.admin).length;
 const isAdmin=()=>!!(CURRENT&&CURRENT.role==='admin');
 function greet(){const h=new Date().getHours();return h<11?"pagi":h<15?"siang":h<19?"sore":"malam";}
@@ -1110,9 +1110,6 @@ async function delUser(id,name){if(!isAdmin())return;if(confirm('Hapus pengguna 
 (function(){var lv=document.getElementById('loginVer');if(lv)lv.textContent='v'+APP_VER+' · '+APP_DATE;})();
 initPeriod();loadSupa();checkSession();
 </script>
-</body>
-</html>
-
 <script>
 /* ===== PATCH v3.8 (12 Jul 2026) — Skema Insentif KACAB Rp 10 juta per pilar + ambang bulanan + gerbang rupiah ===== */
 var V38_ALLOC={"I":3500000,"II":2500000,"III":2000000,"IV":1000000,"V":1000000};
@@ -1249,20 +1246,6 @@ async function ksSave(){
 })();
 </script>
 
-LANGKAH 1 — SUPABASE (SQL Editor → New query → Run):
-------------------------------------------------------
-insert into app_users (username, email, password_hash, role, approved)
-values ('ADMINISTRATOR', 'data@intibharu-grup.com',
-        '276e2acc3ecc2284e445ad4f0482aba6fae5e8c5a7d06837fac9c83ac2dc6b19',
-        'viewer', true)
-on conflict (username) do update set role='viewer', approved=true;
-------------------------------------------------------
-(Login akun baru: username ADMINISTRATOR — kata sandinya saya kirim terpisah di chat.)
-
-
-LANGKAH 2 — GITHUB (index.html → Edit → tempel di baris PALING BAWAH,
-setelah patch v2.7 kemarin → Commit changes):
-------------------------------------------------------
 <script>
 /* ============================================================
    PATCH v2.8 — Role VIEWER (baca-saja): blokir semua tulis
@@ -1740,387 +1723,74 @@ setelah patch v2.7 kemarin → Commit changes):
 })();
 </script>
 
-<script>
-/* ============================================================
-   PATCH v3.1 — Tampilan bersih: grid ikon + tombol Home
-   (14 Jul 2026 — MEDIAN)
-   ============================================================ */
-(function(){
-  var CSS = ''
-  + '.hig-wrap{padding:4px 0 24px}'
-  + '.hig-hi{margin:2px 0 18px}'
-  + '.hig-hi h2{margin:0;font-size:19px;font-weight:700;letter-spacing:.2px}'
-  + '.hig-hi p{margin:3px 0 0;font-size:12px;opacity:.62}'
-  + '.hig-sec{margin:22px 0 10px;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;opacity:.5;font-weight:700}'
-  + '.hig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px}'
-  + '@media(min-width:760px){.hig-grid{grid-template-columns:repeat(6,1fr);gap:18px 8px}}'
-  + '.hig-it{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;padding:4px 2px;border-radius:12px;transition:transform .12s,background .12s;-webkit-tap-highlight-color:transparent}'
-  + '.hig-it:active{transform:scale(.94)}'
-  + '.hig-it:hover{background:rgba(231,181,60,.07)}'
-  + '.hig-ic{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:23px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.10);box-shadow:0 1px 3px rgba(0,0,0,.18)}'
-  + '.hig-it:hover .hig-ic{border-color:rgba(231,181,60,.55)}'
-  + '.hig-tx{font-size:10.5px;line-height:1.25;text-align:center;opacity:.9;max-width:74px}'
-  + '.hig-lock .hig-ic{opacity:.32;filter:grayscale(1)}'
-  + '.hig-lock .hig-tx{opacity:.42}'
-  + '.hig-dot{position:absolute;margin:-52px 0 0 34px;width:7px;height:7px;border-radius:50%;background:#E7B53C}'
-  + '.hig-home{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);cursor:pointer;font-size:16px;margin-right:8px}'
-  + '.hig-home:hover{border-color:#E7B53C}';
-  var st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
-
-  var GRUP = [
-    {k:'utama', t:'Utama'},
-    {k:'data',  t:'Data & Karyawan'},
-    {k:'ops',   t:'Operasional HR'},
-    {k:'komp',  t:'Kompensasi & Dokumen'}
-  ];
-
-  function gridHTML(){
-    var nama = (CURRENT && CURRENT.username) ? CURRENT.username : '';
-    var sapa = (typeof greet === 'function') ? greet() : '';
-    var h = '<div class="hig-wrap">'
-          + '<div class="hig-hi"><h2>Selamat ' + sapa + (nama ? ', ' + nama : '') + '</h2>'
-          + '<p>Ketuk ikon untuk membuka modul.</p></div>';
-    GRUP.forEach(function(g){
-      var list = MODULES.filter(function(m){
-        if(m.id === 'dashboard') return false;
-        if(m.admin && !(CURRENT && CURRENT.role === 'admin')) return false;
-        return m.grp === g.k;
-      });
-      if(!list.length) return;
-      h += '<div class="hig-sec">' + g.t + '</div><div class="hig-grid">';
-      list.forEach(function(m){
-        var lock = (m.status !== 'aktif');
-        h += '<div class="hig-it' + (lock ? ' hig-lock' : '') + '" onclick="go(\'' + m.id + '\')" title="' + (m.desc || '').replace(/"/g,'') + '">'
-           + '<div class="hig-ic">' + m.ic + '</div>'
-           + (lock ? '' : '<div class="hig-dot"></div>')
-           + '<div class="hig-tx">' + m.name + '</div>'
-           + '</div>';
-      });
-      h += '</div>';
-    });
-    h += '</div>';
-    return h;
-  }
-
-  function pasangHome(){
-    var top = document.querySelector('.top');
-    if(!top || document.getElementById('higHome')) return;
-    var b = document.createElement('button');
-    b.id = 'higHome'; b.className = 'hig-home'; b.title = 'Kembali ke Beranda';
-    b.textContent = '🏠';
-    b.onclick = function(){ go('dashboard'); };
-    var h1 = top.querySelector('h1');
-    top.insertBefore(b, h1 || top.firstChild);
-  }
-
-  function render(){
-    var v = document.getElementById('view-dashboard');
-    if(!v || typeof MODULES === 'undefined') return;
-    v.innerHTML = gridHTML();
-    pasangHome();
-    var hb = document.getElementById('higHome');
-    if(hb) hb.style.display = 'none';
-  }
-
-  var _go = window.go;
-  window.go = function(id){
-    _go(id);
-    pasangHome();
-    var hb = document.getElementById('higHome');
-    if(hb) hb.style.display = (id === 'dashboard') ? 'none' : 'inline-flex';
-    if(id === 'dashboard') render();
-  };
-
-  var _showApp = window.showApp;
-  window.showApp = function(){
-    _showApp();
-    setTimeout(render, 250);
-  };
-
-  setTimeout(function(){ pasangHome(); render(); }, 1400);
-})();
-</script>
 
 <script>
 /* ============================================================
-   PATCH v3.2 — Paksa tampilan grid + label versi
-   (14 Jul 2026 — MEDIAN)
+   UI v5.0 — Beranda Ikon (MEDIAN, 14 Jul 2026)
+   Satu-satunya lapisan tampilan. Patch v3.1/v3.2/v4.0/v4.1
+   sudah dihapus permanen — jangan ditambah lapisan lain lagi.
    ============================================================ */
 (function(){
-  function setVer(){
-    var f = document.getElementById('appFoot');
-    if(f) f.innerHTML = 'v3.2 · 14 Jul 2026<br>Modul aktif: ' +
-      (typeof MODULES!=='undefined' ? MODULES.filter(function(m){return m.status==='aktif'&&!m.admin;}).length : '-') + '/12 · Pilot';
-    var b = document.querySelector('.brand span');
-    if(b && b.textContent.indexOf('v3.2')<0) b.textContent = 'PT Inti Bharu Mas · v3.2';
-  }
-  function paksaGrid(){
-    var v = document.getElementById('view-dashboard');
-    if(!v || typeof MODULES === 'undefined') return;
-    if(!v.classList.contains('show')) return;
-    if(v.querySelector('.hig-grid')) return;   /* sudah grid */
-    if(typeof window.__higRender === 'function'){ window.__higRender(); return; }
-    /* fallback: bangun grid sendiri */
-    var GRUP=[{k:'utama',t:'Utama'},{k:'data',t:'Data & Karyawan'},{k:'ops',t:'Operasional HR'},{k:'komp',t:'Kompensasi & Dokumen'}];
-    var nama=(CURRENT&&CURRENT.username)?CURRENT.username:'';
-    var sapa=(typeof greet==='function')?greet():'';
-    var h='<div class="hig-wrap"><div class="hig-hi"><h2>Selamat '+sapa+(nama?', '+nama:'')+'</h2><p>Ketuk ikon untuk membuka modul.</p></div>';
-    GRUP.forEach(function(g){
-      var list=MODULES.filter(function(m){
-        if(m.id==='dashboard') return false;
-        if(m.admin && !(CURRENT&&CURRENT.role==='admin')) return false;
-        return m.grp===g.k;
-      });
-      if(!list.length) return;
-      h+='<div class="hig-sec">'+g.t+'</div><div class="hig-grid">';
-      list.forEach(function(m){
-        var lock=(m.status!=='aktif');
-        h+='<div class="hig-it'+(lock?' hig-lock':'')+'" onclick="go(\''+m.id+'\')">'
-          +'<div class="hig-ic">'+m.ic+'</div>'
-          +(lock?'':'<div class="hig-dot"></div>')
-          +'<div class="hig-tx">'+m.name+'</div></div>';
-      });
-      h+='</div>';
-    });
-    h+='</div>';
-    v.innerHTML=h;
-    var hb=document.getElementById('higHome'); if(hb) hb.style.display='none';
-  }
-  setInterval(function(){ paksaGrid(); setVer(); }, 900);
-  setTimeout(function(){ paksaGrid(); setVer(); }, 600);
-})();
-</script>
-
-<script>
-/* ============================================================
-   PATCH v4.0 — Beranda Ikon (MEDIAN, 14 Jul 2026)
-   Tempel di baris PALING BAWAH index.html, setelah v3.2.
-   ============================================================ */
-(function(){
-  var VER = 'v4.0 · 14 Jul 2026';
+  var VER = 'v5.0 · 14 Jul 2026';
 
   var ICO = {
     median:'dog', kpi:'coin', kpistore:'file-check', riwayat:'history',
     users:'user-shield', master:'users', selfservice:'id', karir:'stairs-up',
     struktur:'sitemap', absensi:'fingerprint', kontrak:'file-text',
-    disiplin:'alert-triangle', payroll:'wallet', dokumen:'stamp',
-    laporan:'bell', dashboard:'layout-dashboard'
+    disiplin:'alert-triangle', payroll:'wallet', dokumen:'stamp', laporan:'bell'
   };
-  var GRUP = [
-    {k:'utama', t:'Utama'},
-    {k:'data',  t:'Data & Karyawan'},
-    {k:'ops',   t:'Operasional HR'},
-    {k:'komp',  t:'Kompensasi & Dokumen'}
-  ];
-
-  var f = document.createElement('link');
-  f.rel='stylesheet';
-  f.href='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css';
-  document.head.appendChild(f);
-
-  var CSS = ''
-  + '.m4{padding:2px 0 26px}'
-  + '.m4-hi{margin:2px 0 12px}'
-  + '.m4-hi h2{margin:0;font-size:18px;font-weight:600;letter-spacing:.2px}'
-  + '.m4-hi p{margin:3px 0 0;font-size:11.5px;opacity:.6}'
-  + '.m4-cari{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:9px 11px;margin:0 0 6px}'
-  + '.m4-cari input{flex:1;background:transparent;border:0;outline:0;color:inherit;font-size:13px;padding:0;width:100%}'
-  + '.m4-sec{margin:18px 0 10px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;opacity:.5;font-weight:700}'
-  + '.hig-grid,.m4-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 4px}'
-  + '@media(min-width:760px){.hig-grid,.m4-grid{grid-template-columns:repeat(6,1fr);gap:20px 8px}}'
-  + '.m4-it{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;padding:2px;border-radius:12px;-webkit-tap-highlight-color:transparent;transition:transform .12s}'
-  + '.m4-it:active{transform:scale(.93)}'
-  + '.m4-ic{position:relative;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10)}'
-  + '.m4-it:hover .m4-ic{border-color:rgba(231,181,60,.55)}'
-  + '.m4-on .m4-ic{background:rgba(231,181,60,.13);border-color:rgba(231,181,60,.35);color:#E7B53C}'
-  + '.m4-dot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#E7B53C}'
-  + '.m4-tx{font-size:9.5px;line-height:1.25;text-align:center;opacity:.85;max-width:76px}'
-  + '.m4-off .m4-ic{opacity:.3}.m4-off .m4-tx{opacity:.4}'
-  + '.m4-home{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1px solid rgba(231,181,60,.4);background:rgba(231,181,60,.13);color:#E7B53C;cursor:pointer;font-size:17px;margin-right:8px;flex:none}'
-  + '.m4-ver{font-size:9.5px;opacity:.55;letter-spacing:.3px;margin-left:8px;white-space:nowrap}';
-  var st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
-
-  function ikon(m){
-    var n = ICO[m.id];
-    if(n) return '<i class="ti ti-'+n+'"></i>';
-    return m.ic || '•';
-  }
-
-  function daftar(){
-    return MODULES.filter(function(m){
-      if(m.id==='dashboard') return false;
-      if(m.admin && !(CURRENT && CURRENT.role==='admin')) return false;
-      return true;
-    });
-  }
-
-  function gridHTML(q){
-    q = (q||'').toLowerCase();
-    var nama = (CURRENT && CURRENT.username) ? CURRENT.username : '';
-    var sapa = (typeof greet==='function') ? greet() : 'datang';
-    var h = '<div class="m4">'
-      + '<div class="m4-hi"><h2>Selamat '+sapa+(nama?', '+nama:'')+'</h2>'
-      + '<p>Ketuk ikon untuk membuka modul · '+VER+'</p></div>'
-      + '<div class="m4-cari"><i class="ti ti-search"></i>'
-      + '<input id="m4Cari" placeholder="Cari modul…" autocomplete="off" value="'+(q?q.replace(/"/g,''):'')+'"></div>';
-    var ada=0;
-    GRUP.forEach(function(g){
-      var list = daftar().filter(function(m){
-        if(m.grp!==g.k) return false;
-        if(q && (m.name||'').toLowerCase().indexOf(q)<0) return false;
-        return true;
-      });
-      if(!list.length) return;
-      ada+=list.length;
-      h += '<div class="m4-sec">'+g.t+'</div><div class="hig-grid m4-grid">';
-      list.forEach(function(m){
-        var on = (m.status==='aktif');
-        h += '<div class="m4-it '+(on?'m4-on':'m4-off')+'" onclick="go(\''+m.id+'\')">'
-           + '<div class="m4-ic">'+ikon(m)+(on?'<span class="m4-dot"></span>':'')+'</div>'
-           + '<div class="m4-tx">'+m.name+'</div></div>';
-      });
-      h += '</div>';
-    });
-    if(!ada) h += '<div style="opacity:.5;font-size:12px;padding:18px 0">Modul tidak ditemukan.</div>';
-    h += '</div>';
-    return h;
-  }
-
-  function render(q){
-    var v = document.getElementById('view-dashboard');
-    if(!v || typeof MODULES==='undefined') return;
-    v.innerHTML = gridHTML(q);
-    var c = document.getElementById('m4Cari');
-    if(c){
-      c.oninput = function(){ var val=this.value; render(val); var n=document.getElementById('m4Cari'); if(n){n.focus(); n.setSelectionRange(val.length,val.length);} };
-    }
-    pasang();
-    var hb=document.getElementById('m4Home'); if(hb) hb.style.display='none';
-  }
-
-  function pasang(){
-    var top = document.querySelector('.top');
-    if(!top) return;
-    if(!document.getElementById('m4Home')){
-      var b=document.createElement('button');
-      b.id='m4Home'; b.className='m4-home'; b.title='Beranda';
-      b.innerHTML='<i class="ti ti-home"></i>';
-      b.onclick=function(){ go('dashboard'); };
-      top.insertBefore(b, top.firstChild);
-    }
-    if(!document.getElementById('m4Ver')){
-      var s=document.createElement('span');
-      s.id='m4Ver'; s.className='m4-ver'; s.textContent=VER;
-      var h1=top.querySelector('h1');
-      if(h1 && h1.parentNode) h1.parentNode.insertBefore(s, h1.nextSibling);
-      else top.appendChild(s);
-    }
-    var old=document.getElementById('higHome'); if(old) old.style.display='none';
-  }
-
-  function bersihkanTeksLiar(){
-    var w=document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
-    var buang=[], n;
-    while((n=w.nextNode())){
-      var t=(n.nodeValue||'').trim();
-      if(!t) continue;
-      if(t.indexOf('LANGKAH 1 — SUPABASE')===0 || t.indexOf('LANGKAH 2 — GITHUB')===0 || /^-{5,}$/.test(t)) buang.push(n);
-    }
-    buang.forEach(function(x){ if(x.parentNode) x.parentNode.removeChild(x); });
-  }
-
-  var _go = window.go;
-  window.go = function(id){
-    _go(id);
-    pasang();
-    var hb=document.getElementById('m4Home');
-    if(hb) hb.style.display = (id==='dashboard') ? 'none' : 'inline-flex';
-    if(id==='dashboard') render('');
-  };
-
-  var _showApp = window.showApp;
-  window.showApp = function(){
-    _showApp();
-    setTimeout(function(){ pasang(); render(''); bersihkanTeksLiar(); }, 300);
-  };
-
-  setInterval(function(){
-    var v=document.getElementById('view-dashboard');
-    if(!v || v.style.display==='none') return;
-    if(!v.querySelector('.m4-grid')) render('');
-  }, 1200);
-
-  setTimeout(function(){ pasang(); render(''); bersihkanTeksLiar(); }, 1500);
-})();
-</script>
-
-<script>
-/* ============================================================
-   PATCH v4.1 — Rapikan Beranda Ikon (MEDIAN, 14 Jul 2026)
-   Tempel di baris PALING BAWAH index.html, setelah v4.0.
-   ============================================================ */
-(function(){
-  var VER = 'v4.1 · 14 Jul 2026';
-
-  var ICO = {
-    median:'dog', kpi:'coin', kpistore:'file-check', riwayat:'history',
-    users:'user-shield', master:'users', selfservice:'id', karir:'stairs-up',
-    struktur:'sitemap', absensi:'fingerprint', kontrak:'file-text',
-    disiplin:'alert-triangle', payroll:'wallet', dokumen:'stamp',
-    laporan:'bell'
-  };
-
   var NAMA = {
     median:'Median', kpi:'Insentif', kpistore:'Simpan KPI', riwayat:'Riwayat KPI',
     users:'Pengguna', master:'Karyawan', selfservice:'Self-Service', karir:'Karir',
     struktur:'Struktur', absensi:'Absensi', kontrak:'Kontrak',
     disiplin:'Disiplin', payroll:'Gaji', dokumen:'Dokumen', laporan:'Laporan'
   };
-
   var GRUP = [
-    {t:'Utama',                 ids:['median','kpistore','riwayat','kpi']},
-    {t:'Data & Karyawan',       ids:['master','users','selfservice','struktur']},
-    {t:'Operasional HR',        ids:['absensi','kontrak','disiplin','karir']},
-    {t:'Kompensasi & Dokumen',  ids:['payroll','dokumen','laporan']}
+    {t:'Utama',                ids:['median','kpistore','riwayat','kpi']},
+    {t:'Data & Karyawan',      ids:['master','users','selfservice','struktur']},
+    {t:'Operasional HR',       ids:['absensi','kontrak','disiplin','karir']},
+    {t:'Kompensasi & Dokumen', ids:['payroll','dokumen','laporan']}
   ];
 
+  var f=document.createElement('link');
+  f.rel='stylesheet';
+  f.href='https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css';
+  document.head.appendChild(f);
+
   var CSS = ''
-  + '.m41{padding:2px 0 28px}'
-  + '.m41 h2{margin:0;font-size:18px;font-weight:600;color:#F2F4F7;letter-spacing:.2px}'
-  + '.m41-sub{margin:3px 0 14px;font-size:11.5px;color:#8FA3BC}'
-  + '.m41-cari{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:9px 11px}'
-  + '.m41-cari input{flex:1;background:transparent;border:0;outline:0;color:#F2F4F7;font-size:13px;padding:0;width:100%}'
-  + '.m41-sec{margin:20px 0 10px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#7C8FA8;font-weight:700}'
-  + '.m41-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 4px}'
-  + '@media(min-width:760px){.m41-grid{grid-template-columns:repeat(6,1fr);gap:20px 8px}}'
-  + '.m41-it{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s}'
-  + '.m41-it:active{transform:scale(.93)}'
-  + '.m41-ic{position:relative;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#C9D4E2}'
-  + '.m41-it:hover .m41-ic{border-color:rgba(231,181,60,.5)}'
-  + '.m41-dot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#E7B53C}'
-  + '.m41-tx{font-size:10px;line-height:1.2;text-align:center;color:#C9D4E2;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-  + '.m41-off .m41-ic{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06);color:#5B6B7E}'
-  + '.m41-off .m41-tx{color:#5B6B7E}'
-  + '.m41-home{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1px solid rgba(231,181,60,.4);background:rgba(231,181,60,.13);color:#E7B53C;cursor:pointer;font-size:17px;margin-right:8px;flex:none}'
+  + '.ig{padding:2px 0 28px}'
+  + '.ig h2{margin:0;font-size:18px;font-weight:600;color:#F2F4F7}'
+  + '.ig-sub{margin:3px 0 14px;font-size:11.5px;color:#8FA3BC}'
+  + '.ig-cari{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:9px 11px}'
+  + '.ig-cari input{flex:1;background:transparent;border:0;outline:0;color:#F2F4F7;font-size:13px;padding:0;width:100%}'
+  + '.ig-sec{margin:20px 0 10px;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#7C8FA8;font-weight:700}'
+  + '.ig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 4px}'
+  + '@media(min-width:760px){.ig-grid{grid-template-columns:repeat(6,1fr);gap:20px 8px}}'
+  + '.ig-it{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s}'
+  + '.ig-it:active{transform:scale(.93)}'
+  + '.ig-ic{position:relative;width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:#C9D4E2}'
+  + '.ig-it:hover .ig-ic{border-color:rgba(231,181,60,.5)}'
+  + '.ig-dot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#E7B53C}'
+  + '.ig-tx{font-size:10px;line-height:1.2;text-align:center;color:#C9D4E2;max-width:76px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+  + '.ig-off .ig-ic{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06);color:#5B6B7E}'
+  + '.ig-off .ig-tx{color:#5B6B7E}'
+  + '.ig-home{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;border:1px solid rgba(231,181,60,.4);background:rgba(231,181,60,.13);color:#E7B53C;cursor:pointer;font-size:17px;margin-right:8px;flex:none}'
   + '.top{flex-wrap:nowrap!important;gap:6px!important;align-items:center!important}'
   + '.top h1{font-size:16px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
   + '.top button{font-size:11px!important;padding:5px 9px!important;white-space:nowrap}'
-  + '#m4Ver,#whoami{font-size:10px!important;white-space:nowrap;color:#8FA3BC!important}';
-  var st=document.createElement('style'); st.id='m41css'; st.textContent=CSS; document.head.appendChild(st);
+  + '#whoami{font-size:10px!important;white-space:nowrap;color:#8FA3BC!important}';
+  var st=document.createElement('style'); st.textContent=CSS; document.head.appendChild(st);
 
-  function cari(id){
-    for(var i=0;i<MODULES.length;i++) if(MODULES[i].id===id) return MODULES[i];
-    return null;
-  }
+  function cari(id){ for(var i=0;i<MODULES.length;i++) if(MODULES[i].id===id) return MODULES[i]; return null; }
 
   function gridHTML(q){
     q=(q||'').toLowerCase();
-    var nama=(CURRENT&&CURRENT.username)?CURRENT.username:'';
+    var nm=(CURRENT&&CURRENT.username)?CURRENT.username:'';
     var sapa=(typeof greet==='function')?greet():'datang';
-    var h='<div class="m41"><h2>Selamat '+sapa+(nama?', '+nama:'')+'</h2>'
-        + '<div class="m41-sub">Ketuk ikon untuk membuka modul · '+VER+'</div>'
-        + '<div class="m41-cari"><i class="ti ti-search"></i>'
-        + '<input id="m41Cari" placeholder="Cari modul…" autocomplete="off" value="'+q.replace(/"/g,'')+'"></div>';
+    var h='<div class="ig"><h2>Selamat '+sapa+(nm?', '+nm:'')+'</h2>'
+        +'<div class="ig-sub">Ketuk ikon untuk membuka modul · '+VER+'</div>'
+        +'<div class="ig-cari"><i class="ti ti-search"></i>'
+        +'<input id="igCari" placeholder="Cari modul…" autocomplete="off" value="'+q.replace(/"/g,'')+'"></div>';
     var ada=0;
     GRUP.forEach(function(g){
       var list=[];
@@ -2133,61 +1803,58 @@ setelah patch v2.7 kemarin → Commit changes):
       });
       if(!list.length) return;
       ada+=list.length;
-      h+='<div class="m41-sec">'+g.t+'</div><div class="m41-grid">';
+      h+='<div class="ig-sec">'+g.t+'</div><div class="ig-grid">';
       list.forEach(function(x){
         var on=(x.m.status==='aktif');
-        h+='<div class="m41-it '+(on?'':'m41-off')+'" onclick="go(\''+x.m.id+'\')" title="'+x.m.name+'">'
-          +'<div class="m41-ic"><i class="ti ti-'+(ICO[x.m.id]||'circle')+'"></i>'+(on?'<span class="m41-dot"></span>':'')+'</div>'
-          +'<div class="m41-tx">'+x.label+'</div></div>';
+        h+='<div class="ig-it '+(on?'':'ig-off')+'" onclick="go(\''+x.m.id+'\')" title="'+x.m.name+'">'
+          +'<div class="ig-ic"><i class="ti ti-'+(ICO[x.m.id]||'circle')+'"></i>'+(on?'<span class="ig-dot"></span>':'')+'</div>'
+          +'<div class="ig-tx">'+x.label+'</div></div>';
       });
       h+='</div>';
     });
     if(!ada) h+='<div style="color:#7C8FA8;font-size:12px;padding:18px 0">Modul tidak ditemukan.</div>';
-    h+='</div>';
-    return h;
+    return h+'</div>';
+  }
+
+  function pasang(){
+    var top=document.querySelector('.top'); if(!top) return;
+    if(!document.getElementById('igHome')){
+      var b=document.createElement('button');
+      b.id='igHome'; b.className='ig-home'; b.title='Beranda';
+      b.innerHTML='<i class="ti ti-home"></i>';
+      b.onclick=function(){ go('dashboard'); };
+      top.insertBefore(b, top.firstChild);
+    }
   }
 
   function render(q){
     var v=document.getElementById('view-dashboard');
     if(!v || typeof MODULES==='undefined') return;
-    v.innerHTML=gridHTML(q);
-    var c=document.getElementById('m41Cari');
-    if(c) c.oninput=function(){ var val=this.value; render(val); var n=document.getElementById('m41Cari'); if(n){n.focus(); n.setSelectionRange(val.length,val.length);} };
+    var baru=gridHTML(q);
+    if(v.innerHTML!==baru) v.innerHTML=baru;
+    var c=document.getElementById('igCari');
+    if(c) c.oninput=function(){ var val=this.value; render(val); var n=document.getElementById('igCari'); if(n){ n.focus(); n.setSelectionRange(val.length,val.length); } };
     pasang();
-    var hb=document.getElementById('m41Home'); if(hb) hb.style.display='none';
-  }
-
-  function pasang(){
-    var top=document.querySelector('.top'); if(!top) return;
-    if(!document.getElementById('m41Home')){
-      var b=document.createElement('button');
-      b.id='m41Home'; b.className='m41-home'; b.title='Beranda';
-      b.innerHTML='<i class="ti ti-home"></i>';
-      b.onclick=function(){ go('dashboard'); };
-      top.insertBefore(b, top.firstChild);
-    }
-    ['higHome','m4Home','m4Ver'].forEach(function(id){
-      var e=document.getElementById(id); if(e) e.style.display='none';
-    });
-    document.querySelectorAll('.fab,.menu-fab,#fab,#menuFab').forEach(function(e){ e.style.display='none'; });
+    var hb=document.getElementById('igHome'); if(hb) hb.style.display='none';
   }
 
   var _go=window.go;
   window.go=function(id){
     _go(id);
     pasang();
-    var hb=document.getElementById('m41Home');
+    var hb=document.getElementById('igHome');
     if(hb) hb.style.display=(id==='dashboard')?'none':'inline-flex';
     if(id==='dashboard') render('');
   };
 
-  setInterval(function(){
-    var v=document.getElementById('view-dashboard');
-    if(!v || v.style.display==='none') return;
-    if(!v.querySelector('.m41-grid')) render('');
-    pasang();
-  },1200);
+  var _showApp=window.showApp;
+  window.showApp=function(){
+    _showApp();
+    setTimeout(function(){ pasang(); render(''); }, 300);
+  };
 
-  setTimeout(function(){ pasang(); render(''); },1200);
+  setTimeout(function(){ pasang(); render(''); }, 1200);
 })();
 </script>
+</body>
+</html>
